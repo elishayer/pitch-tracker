@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="">
+        <meta name="author" content="">
+
+        <title id="title">Pitch Tracker</title>
+
+        <!-- Bootstrap Core CSS -->
+        <link href="stylesheets/bootstrap.min.css" rel="stylesheet">
+
+        <!-- Custom CSS -->
+        <link href="stylesheets/stylish-portfolio.css" rel="stylesheet">
+
+        <!-- Custom Fonts -->
+        <link href="font-awesome-4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+        <link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css">
+
+        <!-- Favicon -->
+        <link rel="shortcut icon" href="https://lh3.googleusercontent.com/0aQv735lHiWyoifclepTycYXgKcZHK9AigfeAs2GtYI=s16-no" />
+
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+
+        <style>
+        div.message {
+            margin: auto;
+            text-align: center;
+            font-size: x-large;
+        }
+        th {
+            background-color: #eeeeee;
+        }
+        </style>
+    </head>
+
+    <body>
+
+        <div class="container">
+
+            <div class="page-header" id="header">
+                <h1>Pitch Tracker</h1>
+            </div>
+
+            <div class="row">
+
+                <!-- Main content -->
+                <div class="col-xs-6">
+                    <div id="box" class="center"></div>
+                    <div id="message" class="message"></div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="col-xs-2">
+                    <div id="pitchInput">
+                        <label for="pitchTypeInput">Pitch Type Selector</label>
+                        <select id="pitchTypeInput" class="form-control">
+                            <option value="na">--- Select Pitch ---</option>
+                            <option value="4seam">Fastball (4-seam)</option>
+                            <option value="2seam">Fastball (2-seam)</option>
+                            <option value="sinker">Sinker</option>
+                            <option value="changeup">Changeup</option>
+                            <option value="curveball">Curveball</option>
+                            <option value="slider">Slider</option>
+                        </select>
+                        <br/>
+                        <label for="pitchVelocityInput">Pitch Velocity</label>
+                        <input id="pitchVelocityInput" type="number" min="0" step="1" class="form-control" placeholder="Velocity">
+                        <br/>
+                        <label for="pitchResultInput">Pitch Result Selector</label>
+                        <select id="pitchResultInput" class="form-control">
+                            <option value="na">--- Select Result ---</option>
+                            <option value="b">Ball</option>
+                            <option value="ss">Swinging Strike</option>
+                            <option value="cs">Called Strike</option>
+                            <option value="f">Foul</option>
+                            <option value="ft">Foul Tip</option>
+                            <option value="p">In Play</option>
+                        </select>
+                        <br/>
+                        <button type="submit" id="submitPitch" class="btn btn-default">Submit Pitch</button>
+                    </div>
+                    <div id="playerInput">
+                        <label for="pitcherNameInput">Pitcher Name</label>
+                        <input id="pitcherNameInput" type="text" class="form-control" placeholder="Pitcher name">
+                        <br/>
+                        <label for="hitterNameInput">Hitter Name</label>
+                        <input id="hitterNameInput" type="text" class="form-control" placeholder="Hitter name">
+                        <br/>
+                        <button type="submit" id="submitPlayers" class="btn btn-default">Submit Players</button>
+                    </div>
+                    <div id="resultInput">
+                        <label for="paResultSelector">Plate Appearance Result Selector</label>
+                        <select id="paResultSelector" class="form-control">
+                            <option value="na">--- Select Result ---</option>
+                            <option value="out">In-Play Out</option>
+                            <option value="1b">Single</option>
+                            <option value="2b">Double</option>
+                            <option value="3b">Triple</option>
+                            <option value="hr">Home Run</option>
+                        </select>
+                        <br/>
+                        <button type="submit" id="submitResult" class="btn btn-default">Submit Result</button>
+                    </div>
+                </div>
+
+                <div class="col-xs-4 pitchdata">
+                    <table class="table table-bordered" id="pitchesTable">
+                        <caption>
+                            <h3>Current Plate Appearance</h3>
+                            <div id="captionNames"></div>
+                        </caption>
+                        <tr>
+                            <th>Num</th>
+                            <th>Velocity</th>
+                            <th>Pitch Type</th>
+                            <th>Pitch Result</th>
+                            <th>Count</th>
+                        </tr>
+                    </table>
+                </div>
+
+            </div><!-- /.row -->
+
+        </div><!-- /.container -->
+
+        <!-- jQuery Version 1.11.0 -->
+        <script src="js/libraries/jquery-1.11.0.js"></script>
+
+        <!-- Bootstrap Core JavaScript -->
+        <script src="js/libraries/bootstrap.min.js"></script>
+
+        <!-- Raphael Javascript -->
+        <script src="js/libraries/raphael.js"></script>
+
+        <!-- MVC model -->
+        <script src="js/pt-model.js"></script>    
+        <script src="js/pt-controller.js"></script>
+        <script src="js/pt-view.js"></script>
+    </body>
+
+</html>
