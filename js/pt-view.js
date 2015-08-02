@@ -18,12 +18,27 @@ var STRIKE_COLOR = "red";
 var IN_PLAY_COLOR = "blue";
 var PROSPECTIVE_COLOR = "yellow";
 
-// input possibilities
-var inputs = [
-    "#pitchInput",
-    "#playerInput",
-    "#resultInput"
-];
+// input possibilities and constants
+var inputViews = {
+    player: {
+        view: "#playerInput",
+        focus: "#pitcherNameInput"
+    },
+    pitch: {
+        view: "#pitchInput",
+        focus: "#pitchTypeInput"
+    },
+    result: {
+        view: "#resultInput",
+        focus: "#paResultSelector"
+    }
+};
+var PLAYER_INPUT_VIEW = "player";
+var PITCH_INPUT_VIEW = "pitch";
+var RESULT_INPUT_VIEW = "result";
+
+// initialize the current view to the player input view
+var currentInputView = PLAYER_INPUT_VIEW;
 
 // global variable for the paper
 var paper = null;
@@ -91,7 +106,7 @@ refreshGraphics = function() {
 window.onload = refreshGraphics;
 
 // initialize the view to show the player inputs
-setInputView("playerInput");
+setInputView(PLAYER_INPUT_VIEW);
 
 // global variable to keep track of pitches in the view
 drawnPitches = {}

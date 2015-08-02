@@ -10,6 +10,7 @@ attachListeners = function() {
         var location = ptModel.getPitchLocation(event);
         ptModel.setProspectivePitch(location);
         ptViewFunctions.drawProspectivePitch(location);
+        $(inputViews[currentInputView].focus).focus();
     });
 
     // submit button to submit pitches
@@ -27,7 +28,7 @@ attachListeners = function() {
             ptViewFunctions.submitPitch(pitch);
             clearPitchInputs();
             if (pitch.result == "p") {
-                setInputView("resultInput");
+                setInputView(RESULT_INPUT_VIEW);
                 ptViewFunctions.setMessage("In play, select a result");
             } else if (ptModel.getCount().substring(0, 1) == 4) {
                 setPaResult("bb");
@@ -49,7 +50,7 @@ attachListeners = function() {
         if (pitcherName && hitterName) {
             ptModel.setPlayers(pitcherName, hitterName);
             $("#captionNames").text("Pitcher: " + pitcherName + ", Hitter: " + hitterName);
-            setInputView("pitchInput");
+            setInputView(PITCH_INPUT_VIEW);
             clearPlayerInputs
             ptViewFunctions.noError();
         } else {
@@ -60,7 +61,6 @@ attachListeners = function() {
     $("#submitResult").click(function() {
         var paResult = $("#paResultSelector").val();
         if (paResult != "na") {
-            ptViewFunctions.setMessage("The plate appearance ended in a " + paResult);
             setPaResult(paResult);
         } else {
             ptViewFunctions.setError("You need to select a plate appearance result");
@@ -100,16 +100,31 @@ clearResultInput = function() {
     $("#paResultSelector").val("");
 }
 
-// sets the single input view that is specified by id to visisble
-setInputView = function(id) {
-    id = "#" + id;
-    inputs.forEach(function(input) {
-        $(input).toggle(input == id);
-    });
-}
-
+// sets the result of the pa in the model and the view, and updates
+// the input view
 setPaResult = function(result) {
     ptModel.setPaResult(result);
     ptViewFunctions.endPa(result);
-    setInputView("playerInput");
+    ptViewFunctions.setMessage("The plate appearance ended in a " + result);
+    setInputView(PLAYER_INPUT_VIEW);
+}
+
+// sets the single input view that is specified by id to visisble
+setInputView = function(view) {
+    for (var inputView in inputViews) {
+        // guard against properties being added to the Array object type
+        if (inputViews.hasOwnProperty(inputView)) {
+            // if the inputView is the selected view
+            if (inputView == view) {
+                // update and show the currentInputView
+                currentInputView = view;
+                $(inputViews[inputView].view).toggle(true);
+                // focus on the relevant selector or input
+                $(inputViews[inputView].focus).focus();
+            } else {
+                // don't show the non-selected input views
+                $(inputViews[inputView].view).toggle(false);
+            }
+        }
+    }
 }
