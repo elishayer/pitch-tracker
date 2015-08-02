@@ -79,7 +79,5 @@ ptModel.getCount = function() {
 
 // sets the result of the plate appearance
 ptModel.setPaResult = function(paResult) {
-	console.log(Model.plateAppearances[paCount]);
-	Model.plateAppearances[paCount].result = paResult;
-	paCount++;
+	Model.plateAppearances[paCount++].result = paResult;
 }
