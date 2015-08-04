@@ -10,12 +10,12 @@ attachListeners = function() {
         var location = ptModel.getPitchLocation(event);
         ptModel.setProspectivePitch(location);
         ptViewFunctions.drawProspectivePitch(location);
-        $(inputViews[currentInputView].focus).focus();
+        ptViewFunctions.refocus();
     });
 
     // submit button to submit pitches
     $("#submitPitch").click(function() {
-        ptViewFunctions.noError();
+        ptViewFunctions.clearMessage();
         var pitch = {
             type: $("#pitchTypeInput").val(),
             velocity: $("#pitchVelocityInput").val(),
@@ -28,15 +28,15 @@ attachListeners = function() {
             ptViewFunctions.submitPitch(pitch);
             clearPitchInputs();
             if (pitch.result == "p") {
-                setInputView(RESULT_INPUT_VIEW);
+                ptViewFunctions.setInputView(RESULT_INPUT_VIEW);
                 ptViewFunctions.setMessage("In play, select a result");
             } else if (ptModel.getCount().substring(0, 1) == 4) {
                 setPaResult("bb");
             } else if (ptModel.getCount().substring(2, 3) == 3) {
                 setPaResult("k");
             } else {
-                ptViewFunctions.noError();
-                $("#pitchTypeInput").focus();
+                ptViewFunctions.clearMessage();
+                ptViewFunctions.refocus();
             }
         } else {
             ptViewFunctions.setError("There is missing data");
@@ -50,9 +50,9 @@ attachListeners = function() {
         if (pitcherName && hitterName) {
             ptModel.setPlayers(pitcherName, hitterName);
             $("#captionNames").text("Pitcher: " + pitcherName + ", Hitter: " + hitterName);
-            setInputView(PITCH_INPUT_VIEW);
+            ptViewFunctions.setInputView(PITCH_INPUT_VIEW);
             clearPlayerInputs
-            ptViewFunctions.noError();
+            ptViewFunctions.clearMessage();
         } else {
             ptViewFunctions.setError("Missing pitcher and/or hitter data")
         }
@@ -106,25 +106,5 @@ setPaResult = function(result) {
     ptModel.setPaResult(result);
     ptViewFunctions.endPa(result);
     ptViewFunctions.setMessage("The plate appearance ended in a " + result);
-    setInputView(PLAYER_INPUT_VIEW);
-}
-
-// sets the single input view that is specified by id to visisble
-setInputView = function(view) {
-    for (var inputView in inputViews) {
-        // guard against properties being added to the Array object type
-        if (inputViews.hasOwnProperty(inputView)) {
-            // if the inputView is the selected view
-            if (inputView == view) {
-                // update and show the currentInputView
-                currentInputView = view;
-                $(inputViews[inputView].view).toggle(true);
-                // focus on the relevant selector or input
-                $(inputViews[inputView].focus).focus();
-            } else {
-                // don't show the non-selected input views
-                $(inputViews[inputView].view).toggle(false);
-            }
-        }
-    }
+    ptViewFunctions.setInputView(PLAYER_INPUT_VIEW);
 }

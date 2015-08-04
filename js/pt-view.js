@@ -106,7 +106,7 @@ refreshGraphics = function() {
 window.onload = refreshGraphics;
 
 // initialize the view to show the player inputs
-setInputView(PLAYER_INPUT_VIEW);
+ptViewFunctions.setInputView(PLAYER_INPUT_VIEW);
 
 // global variable to keep track of pitches in the view
 drawnPitches = {}
@@ -186,8 +186,8 @@ ptViewFunctions.setError = function(errorText) {
     ptViewFunctions.setMessage("Error: " + errorText, "red");
 }
 
-// make the error message not visible
-ptViewFunctions.noError = function() {
+// make the message not visible
+ptViewFunctions.clearMessage = function() {
     $("#message").toggle(false);
 }
 
@@ -236,4 +236,29 @@ ptViewFunctions.clearPitches = function() {
         drawnPitches.prospectivePitch.raphael.remove();
         drawnPitches.prospectivePitch = null;
     }
+}
+
+// sets the single input view that is specified by id to visisble
+ptViewFunctions.setInputView = function(view) {
+    for (var inputView in inputViews) {
+        // guard against properties being added to the Array object type
+        if (inputViews.hasOwnProperty(inputView)) {
+            // if the inputView is the selected view
+            if (inputView == view) {
+                // update and show the currentInputView
+                currentInputView = view;
+                $(inputViews[inputView].view).toggle(true);
+                // focus on the relevant selector or input
+                $(inputViews[inputView].focus).focus();
+            } else {
+                // don't show the non-selected input views
+                $(inputViews[inputView].view).toggle(false);
+            }
+        }
+    }
+}
+
+// returns the focus to the top input/selector of the current input view
+ptViewFunctions.refocus = function() {
+    $(inputViews[currentInputView].focus).focus();
 }
