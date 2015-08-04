@@ -105,9 +105,6 @@ refreshGraphics = function() {
 // on the initial load and any subsequent resize, refreshes the zone
 window.onload = refreshGraphics;
 
-// initialize the view to show the player inputs
-ptViewFunctions.setInputView(PLAYER_INPUT_VIEW);
-
 // global variable to keep track of pitches in the view
 drawnPitches = {}
 drawnPitches.prospectivePitch = null;
@@ -262,3 +259,6 @@ ptViewFunctions.setInputView = function(view) {
 ptViewFunctions.refocus = function() {
     $(inputViews[currentInputView].focus).focus();
 }
+
+// initialize the view to show the player inputs
+ptViewFunctions.setInputView(PLAYER_INPUT_VIEW);1
