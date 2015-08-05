@@ -77,7 +77,8 @@ ptModel.getCount = function() {
 	return ballCount + "-" + strikeCount;
 }
 
-// sets the result of the plate appearance
+// sets the result of the plate appearance and prepares for the next pa
 ptModel.setPaResult = function(paResult) {
 	Model.plateAppearances[paCount++].result = paResult;
+	ballCount = strikeCount = 0;
 }
