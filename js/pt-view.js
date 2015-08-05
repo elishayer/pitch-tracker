@@ -4,22 +4,31 @@
  */
 
 // constants
-var SIZE = box.clientWidth;          // height and width of paper
-var BUFFER = SIZE / 100;
-var BOX_SIZE = (SIZE - 2 * BUFFER) / 5;
-var LINE_WIDTH = SIZE / 75;
+var ZONE_SIZE= document.getElementById("zoneParent").clientWidth;          // height and width of paper
+var BUFFER = ZONE_SIZE/ 100;
+var BOX_SIZE= (ZONE_SIZE - 2 * BUFFER) / 5;
+var LINE_WIDTH = ZONE_SIZE/ 75;
 var PITCH_RADIUS = 10;
 
 // color constants
-var BOX_FILL = "white"
+var BOX_FILL = "white";
 var BOX_COLOR = "black";
 var BALL_COLOR = "green";
 var STRIKE_COLOR = "red";
 var IN_PLAY_COLOR = "blue";
 var PROSPECTIVE_COLOR = "yellow";
 
+// object for pitch tracker view functions
+var ptView = {};
+
+// global variable to keep track of pitches in the view
+ptView.drawnPitches = {}
+ptView.drawnPitches.prospectivePitch = null;
+ptView.drawnPitches.finalizedPitches = [];
+
+
 // input possibilities and constants
-var inputViews = {
+ptView.inputViews = {
     player: {
         view: "#playerInput",
         focus: "#pitcherNameInput"
@@ -38,86 +47,86 @@ var PITCH_INPUT_VIEW = "pitch";
 var RESULT_INPUT_VIEW = "result";
 
 // initialize the current view to the player input view
-var currentInputView = PLAYER_INPUT_VIEW;
+ptView.currentInputView = PLAYER_INPUT_VIEW;
 
-// global variable for the paper
-var paper = null;
+// global variables for the papers
+ptView.zone = null;
+ptView.bases = null;
 
-// refreshes the pitch tracker zone
-refreshGraphics = function() {
-    // get the box div from the DOM
-    var box = document.getElementById("box");
-
-    // create paper
-    paper = Raphael("box", SIZE, SIZE);
-
-    // set id of the paper to "paper"
-    box.children[0].id = "paper";
-
-    // create main boxes
-    var outside = paper.rect(BUFFER, BUFFER, SIZE - 2 * BUFFER, SIZE - 2 * BUFFER).attr({
-        fill: BOX_FILL,
-        stroke: BOX_COLOR,
-        "stroke-width":LINE_WIDTH,
-    });
-    var inside = paper.rect(BUFFER + BOX_SIZE, BUFFER + BOX_SIZE, 3 * BOX_SIZE, 3 * BOX_SIZE).attr({
-        fill: BOX_FILL,
-        stroke: BOX_COLOR,
-        "stroke-width":(LINE_WIDTH / 2)
-    });
-
+// on the initial load draws the Raphael graphics
+window.onload = function() {
     // helper function to get the location of the nth zone
-    function zone(n) {
+    function zoneLoc(n) {
         return BUFFER + n * BOX_SIZE;
     }
 
     // helper function to draw a one directional line through the Raphael path function
     function drawLine(paper, x0, y0, x1, y1, strokeColor, strokeWidth) {
-        return paper.path("M" + zone(x0) + "," + zone(y0) + "L" + zone(x1) + "," + zone(y1)).attr({
+        return paper.path("M" + x0 + "," + y0 + "L" + x1 + "," + y1).attr({
             stroke: strokeColor,
             "stroke-width":strokeWidth
         });
     }
 
+    // helper function to draw lines in terms of zone locations
+    function drawZoneLine(paper, x0, y0, x1, y1, strokeColor, strokeWidth) {
+        drawLine(paper, zoneLoc(x0), zoneLoc(y0), zoneLoc(x1), zoneLoc(y1), strokeColor, strokeWidth);
+    }
+
+    // helper function to create a paper in the DOM, set its id, and return the paper
+    function createPaper(domId, paperId, size) {
+        var elem = document.getElementById(domId);
+        var paper = Raphael(domId, size, size);
+        elem.children[0].id = paperId;
+        return paper;
+    }
+
+    // create the zone paper object
+    ptView.zone = createPaper("zoneParent", "zone", ZONE_SIZE);
+
+    // create main boxes
+    ptView.zone.rect(BUFFER, BUFFER, ZONE_SIZE- 2 * BUFFER, ZONE_SIZE- 2 * BUFFER).attr({
+        fill: BOX_FILL,
+        stroke: BOX_COLOR,
+        "stroke-width":LINE_WIDTH
+    });
+    ptView.zone.rect(BUFFER + BOX_SIZE, BUFFER + BOX_SIZE, 3 * BOX_SIZE, 3 * BOX_SIZE).attr({
+        fill: BOX_FILL,
+        stroke: BOX_COLOR,
+        "stroke-width":(LINE_WIDTH / 2)
+    });
+
     // form a 3x3 grid on the interior of the strike zone
-    drawLine(paper, 2, 1, 2, 4, BOX_COLOR, LINE_WIDTH / 3); // vertical left
-    drawLine(paper, 3, 1, 3, 4, BOX_COLOR, LINE_WIDTH / 3); // vertical right
-    drawLine(paper, 1, 2, 4, 2, BOX_COLOR, LINE_WIDTH / 3); // horizontal top
-    drawLine(paper, 1, 3, 4, 3, BOX_COLOR, LINE_WIDTH / 3); // horizontal bottom
+    drawZoneLine(ptView.zone, 2, 1, 2, 4, BOX_COLOR, LINE_WIDTH / 3); // vertical left
+    drawZoneLine(ptView.zone, 3, 1, 3, 4, BOX_COLOR, LINE_WIDTH / 3); // vertical right
+    drawZoneLine(ptView.zone, 1, 2, 4, 2, BOX_COLOR, LINE_WIDTH / 3); // horizontal top
+    drawZoneLine(ptView.zone, 1, 3, 4, 3, BOX_COLOR, LINE_WIDTH / 3); // horizontal bottom
 
     // define the outside of the zone with diagonal lines on the corners and straight lines in the middle of the edges
     // perpendicular sides
-    drawLine(paper, 2.5, 0, 2.5, 1, BOX_COLOR, LINE_WIDTH / 3); // top middle
-    drawLine(paper, 2.5, 5, 2.5, 4, BOX_COLOR, LINE_WIDTH / 3); // bottom middle
-    drawLine(paper, 0, 2.5, 1, 2.5, BOX_COLOR, LINE_WIDTH / 3); // middle left
-    drawLine(paper, 5, 2.5, 4, 2.5, BOX_COLOR, LINE_WIDTH / 3); // middle right
+    drawZoneLine(ptView.zone, 2.5, 0, 2.5, 1, BOX_COLOR, LINE_WIDTH / 3); // top middle
+    drawZoneLine(ptView.zone, 2.5, 5, 2.5, 4, BOX_COLOR, LINE_WIDTH / 3); // bottom middle
+    drawZoneLine(ptView.zone, 0, 2.5, 1, 2.5, BOX_COLOR, LINE_WIDTH / 3); // middle left
+    drawZoneLine(ptView.zone, 5, 2.5, 4, 2.5, BOX_COLOR, LINE_WIDTH / 3); // middle right
 
     // diagonal corners
-    drawLine(paper, 0, 0, 1, 1, BOX_COLOR, LINE_WIDTH / 3); // diagonal top left
-    drawLine(paper, 0, 5, 1, 4, BOX_COLOR, LINE_WIDTH / 3); // diagonal bottom left
-    drawLine(paper, 5, 0, 4, 1, BOX_COLOR, LINE_WIDTH / 3); // diagonal top right
-    drawLine(paper, 5, 5, 4, 4, BOX_COLOR, LINE_WIDTH / 3); // diagonal bottom right
+    drawZoneLine(ptView.zone, 0, 0, 1, 1, BOX_COLOR, LINE_WIDTH / 3); // diagonal top left
+    drawZoneLine(ptView.zone, 0, 5, 1, 4, BOX_COLOR, LINE_WIDTH / 3); // diagonal bottom left
+    drawZoneLine(ptView.zone, 5, 0, 4, 1, BOX_COLOR, LINE_WIDTH / 3); // diagonal top right
+    drawZoneLine(ptView.zone, 5, 5, 4, 4, BOX_COLOR, LINE_WIDTH / 3); // diagonal bottom right
+
+    // enter the bases paper into the DOM
+    ptView.bases = createPaper("basesParent", "bases", 200);
 
     // attach listeners to the newly drawn objects
     attachListeners();
 }
 
-// on the initial load and any subsequent resize, refreshes the zone
-window.onload = refreshGraphics;
-
-// global variable to keep track of pitches in the view
-drawnPitches = {}
-drawnPitches.prospectivePitch = null;
-drawnPitches.finalizedPitches = [];
-
-// object for pitch tracker view functions
-ptViewFunctions = {};
-
 // helper function to draw a pitch of a given color and record the
 // pitch in the drawnPitches object
 // returns the object that was drawn
-ptViewFunctions.drawPitch = function(location, color) {
-    return paper.circle(location.x, location.y, PITCH_RADIUS).attr({
+ptView.drawPitch = function(location, color) {
+    return ptView.zone.circle(location.x, location.y, PITCH_RADIUS).attr({
         fill: color,
         stroke: "black",
         "stroke-width": 2
@@ -125,15 +134,15 @@ ptViewFunctions.drawPitch = function(location, color) {
 }
 
 // a function that converts the [0, 1] location to a pixel location
-ptViewFunctions.convertLocation = function(location) {
+ptView.convertLocation = function(location) {
     return {
-        x: SIZE * location.horizontal,
-        y: SIZE * location.vertical
+        x: ZONE_SIZE* location.horizontal,
+        y: ZONE_SIZE* location.vertical
     }
 }
 
 // a helper function to determine the appropriate color for a pitch
-ptViewFunctions.getColor = function(pitch) {
+ptView.getColor = function(pitch) {
     if (pitch.result == 'b') {
         return BALL_COLOR;
     } else if (pitch.result == 'p') {
@@ -144,31 +153,31 @@ ptViewFunctions.getColor = function(pitch) {
 }
 
 // function to draw a prospective pitch, colored yellow
-ptViewFunctions.drawProspectivePitch = function(location) {
-    // remove any earlier prospectivePitch from the paper
-    if (drawnPitches.prospectivePitch) {
-        drawnPitches.prospectivePitch.remove();
+ptView.drawProspectivePitch = function(location) {
+    // remove any earlier prospectivePitch from the zone
+    if (ptView.drawnPitches.prospectivePitch) {
+        ptView.drawnPitches.prospectivePitch.remove();
     }
     // draw the new prospectivePitch and store the corresponding variable
-    drawnPitches.prospectivePitch = ptViewFunctions.drawPitch(ptViewFunctions.convertLocation(location), PROSPECTIVE_COLOR);
+    ptView.drawnPitches.prospectivePitch = ptView.drawPitch(ptView.convertLocation(location), PROSPECTIVE_COLOR);
 }
 
 // function to submit the current prospective pitch
-ptViewFunctions.submitPitch = function(pitch) {
+ptView.submitPitch = function(pitch) {
     if (!drawnPitches.prospectivePitch) {
-        ptViewFunctions.drawProspectivePitch(pitch.location);
+        ptView.drawProspectivePitch(pitch.location);
     }
-    drawnPitches.prospectivePitch.attr({fill:ptViewFunctions.getColor(pitch)});
+    drawnPitches.prospectivePitch.attr({fill:ptView.getColor(pitch)});
     drawnPitches.finalizedPitches.push({
         raphael: drawnPitches.prospectivePitch,
         pitch: pitch
     });
-    ptViewFunctions.incrementTablePitch(pitch);
+    ptView.incrementTablePitch(pitch);
     drawnPitches.prospectivePitch = null;
 }
 
 // set the message, with the default color of black
-ptViewFunctions.setMessage = function(text, color) {
+ptView.setMessage = function(text, color) {
     if (!color) {
         color = "black";
     }
@@ -179,17 +188,17 @@ ptViewFunctions.setMessage = function(text, color) {
 }
 
 // set the message and make it visible
-ptViewFunctions.setError = function(errorText) {
-    ptViewFunctions.setMessage("Error: " + errorText, "red");
+ptView.setError = function(errorText) {
+    ptView.setMessage("Error: " + errorText, "red");
 }
 
 // make the message not visible
-ptViewFunctions.clearMessage = function() {
+ptView.clearMessage = function() {
     $("#message").toggle(false);
 }
 
 // helper function to create a td element with text as its contents and append it the row
-ptViewFunctions.incrementRow = function(row, text, rowClass) {
+ptView.incrementRow = function(row, text, rowClass) {
     var entry = document.createElement("td");
     entry.innerText = text;
     if (rowClass) {
@@ -199,66 +208,66 @@ ptViewFunctions.incrementRow = function(row, text, rowClass) {
 }
 
 // function to add a row to the table with the information about pitch
-ptViewFunctions.incrementTablePitch = function(pitch) {
+ptView.incrementTablePitch = function(pitch) {
     var row = document.createElement("tr");
-    ptViewFunctions.incrementRow(row, drawnPitches.finalizedPitches.length);
-    ptViewFunctions.incrementRow(row, pitch.velocity);
-    ptViewFunctions.incrementRow(row, pitch.type);
-    ptViewFunctions.incrementRow(row, pitch.result);
-    ptViewFunctions.incrementRow(row, ptModel.getCount());
+    ptView.incrementRow(row, drawnPitches.finalizedPitches.length);
+    ptView.incrementRow(row, pitch.velocity);
+    ptView.incrementRow(row, pitch.type);
+    ptView.incrementRow(row, pitch.result);
+    ptView.incrementRow(row, ptModel.getCount());
     $("#pitchesTable").append(row);
 }
 
 // adds a full width, centered result row to the table
-ptViewFunctions.incrementTableResult = function(result) {
+ptView.incrementTableResult = function(result) {
     $("#pitchesTable").append('<tr><td colspan="5" style="text-align: center;">Result: ' + result + '</td></tr>');
 }
 
-// ends the pa by adding to the table and clearing the pitches from the paper
-ptViewFunctions.endPa = function(result) {
-    ptViewFunctions.incrementTableResult(result);
-    ptViewFunctions.clearPitches();
+// ends the pa by adding to the table and clearing the pitches from the zone
+ptView.endPa = function(result) {
+    ptView.incrementTableResult(result);
+    ptView.clearPitches();
 }
 
 // clear all pitches from drawnPitches
-ptViewFunctions.clearPitches = function() {
-    // removes each pitch from the paper
+ptView.clearPitches = function() {
+    // removes each pitch from the zone
     drawnPitches.finalizedPitches.forEach(function(pitch) {
         pitch.raphael.remove();
     });
     // empties the array
     drawnPitches.finalizedPitches = [];
-    // if there is a prospective pitch, removes from the paper and nulls it out
+    // if there is a prospective pitch, removes from the zone and nulls it out
     if (drawnPitches.prospectivePitch) {
         drawnPitches.prospectivePitch.raphael.remove();
         drawnPitches.prospectivePitch = null;
     }
 }
 
+// returns the focus to the top input/selector of the current input view
+ptView.refocus = function() {
+    $(ptView.inputViews[ptView.currentInputView].focus).focus();
+}
+
 // sets the single input view that is specified by id to visisble
-ptViewFunctions.setInputView = function(view) {
-    for (var inputView in inputViews) {
+ptView.setInputView = function(view) {
+    for (var inputView in ptView.inputViews) {
         // guard against properties being added to the Array object type
-        if (inputViews.hasOwnProperty(inputView)) {
+        if (ptView.inputViews.hasOwnProperty(inputView)) {
             // if the inputView is the selected view
             if (inputView == view) {
                 // update and show the currentInputView
                 currentInputView = view;
-                $(inputViews[inputView].view).toggle(true);
+                $(ptView.inputViews[inputView].view).toggle(true);
                 // focus on the relevant selector or input
-                $(inputViews[inputView].focus).focus();
+                ptView.refocus();
             } else {
                 // don't show the non-selected input views
-                $(inputViews[inputView].view).toggle(false);
+                $(ptView.inputViews[inputView].view).toggle(false);
             }
         }
     }
 }
 
-// returns the focus to the top input/selector of the current input view
-ptViewFunctions.refocus = function() {
-    $(inputViews[currentInputView].focus).focus();
-}
-
 // initialize the view to show the player inputs
-ptViewFunctions.setInputView(PLAYER_INPUT_VIEW);1
+ptView.setInputView(PLAYER_INPUT_VIEW);

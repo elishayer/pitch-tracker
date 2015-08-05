@@ -22,13 +22,13 @@ Model.date = sessionDate;
 // an object to hold functions and temporary data for the pt-mmodel
 var ptModel = {};
 
-// Takes an event and the boundingRect from the paper element, and converts the
+// Takes an event and the boundingRect from the zone element, and converts the
 // data into a location object, which has a horizontal and vertical component.
 // Each are in the [0, 1] range, with (0.5, 0.5) representing middle-middle.
 // Horizontal is increasing to the right, vertical is increasing to the bottom.
 // The strike zone is (0.2, 0.8) in each dimension
 ptModel.getPitchLocation = function(event) {
-	var boundingRect = document.getElementById('paper').getBoundingClientRect();
+	var boundingRect = document.getElementById('zone').getBoundingClientRect();
     return {
         horizontal: (event.clientX - boundingRect.left) / (boundingRect.right - boundingRect.left),
         vertical: (event.clientY - boundingRect.top) / (boundingRect.bottom - boundingRect.top)

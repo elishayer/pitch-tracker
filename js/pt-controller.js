@@ -5,17 +5,17 @@
 
 // attaches all relevant listeners
 attachListeners = function() {
-    // click listener for the paper to record prospective pitches
-    $("#paper").click(function(event) {
+    // click listener for the zone to record prospective pitches
+    $("#zone").click(function(event) {
         var location = ptModel.getPitchLocation(event);
         ptModel.setProspectivePitch(location);
-        ptViewFunctions.drawProspectivePitch(location);
-        ptViewFunctions.refocus();
+        ptView.drawProspectivePitch(location);
+        ptView.refocus();
     });
 
     // submit button to submit pitches
     $("#submitPitch").click(function() {
-        ptViewFunctions.clearMessage();
+        ptView.clearMessage();
         var pitch = {
             type: $("#pitchTypeInput").val(),
             velocity: $("#pitchVelocityInput").val(),
@@ -25,21 +25,21 @@ attachListeners = function() {
         // if all data is properly entered
         if (isValidPitch(pitch, ptModel.getProspectivePitch())) {
             ptModel.submitPitch(pitch);
-            ptViewFunctions.submitPitch(pitch);
+            ptView.submitPitch(pitch);
             clearPitchInputs();
             if (pitch.result == "p") {
-                ptViewFunctions.setInputView(RESULT_INPUT_VIEW);
-                ptViewFunctions.setMessage("In play, select a result");
+                ptView.setInputView(RESULT_INPUT_VIEW);
+                ptView.setMessage("In play, select a result");
             } else if (ptModel.getCount().substring(0, 1) == 4) {
                 setPaResult("bb");
             } else if (ptModel.getCount().substring(2, 3) == 3) {
                 setPaResult("k");
             } else {
-                ptViewFunctions.clearMessage();
-                ptViewFunctions.refocus();
+                ptView.clearMessage();
+                ptView.refocus();
             }
         } else {
-            ptViewFunctions.setError("There is missing data");
+            ptView.setError("There is missing data");
         }
     });
 
@@ -50,11 +50,11 @@ attachListeners = function() {
         if (pitcherName && hitterName) {
             ptModel.setPlayers(pitcherName, hitterName);
             $("#captionNames").text("Pitcher: " + pitcherName + ", Hitter: " + hitterName);
-            ptViewFunctions.setInputView(PITCH_INPUT_VIEW);
+            ptView.setInputView(PITCH_INPUT_VIEW);
             clearPlayerInputs
-            ptViewFunctions.clearMessage();
+            ptView.clearMessage();
         } else {
-            ptViewFunctions.setError("Missing pitcher and/or hitter data")
+            ptView.setError("Missing pitcher and/or hitter data")
         }
     });
 
@@ -63,7 +63,7 @@ attachListeners = function() {
         if (paResult != "na") {
             setPaResult(paResult);
         } else {
-            ptViewFunctions.setError("You need to select a plate appearance result");
+            ptView.setError("You need to select a plate appearance result");
         }
     });
 }
@@ -104,7 +104,7 @@ clearResultInput = function() {
 // the input view
 setPaResult = function(result) {
     ptModel.setPaResult(result);
-    ptViewFunctions.endPa(result);
-    ptViewFunctions.setMessage("The plate appearance ended in a " + result);
-    ptViewFunctions.setInputView(PLAYER_INPUT_VIEW);
+    ptView.endPa(result);
+    ptView.setMessage("The plate appearance ended in a " + result);
+    ptView.setInputView(PLAYER_INPUT_VIEW);
 }
