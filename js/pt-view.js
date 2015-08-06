@@ -3,22 +3,40 @@
  * Controls the view of the pitch tracker
  */
 
-// constants
-var ZONE_SIZE= document.getElementById("zoneParent").clientWidth;
-var BASES_PAPER_SIZE = document.getElementById("basesParent").clientWidth;
-var BUFFER = ZONE_SIZE/ 100;
-var BOX_SIZE= (ZONE_SIZE - 2 * BUFFER) / 5;
-var LINE_WIDTH = ZONE_SIZE/ 75;
-var PITCH_RADIUS = 10;
-var BASE_SIZE = BASES_PAPER_SIZE / 12;
+/* --------------------------- constants -------------------------- */
 
-// color constants
-var BOX_FILL = "white";
-var BOX_COLOR = "black";
+// zone constants
+var ZONE_SIZE = document.getElementById("zoneParent").clientWidth;
+var ZONE_BUFFER = ZONE_SIZE/ 100;
+var BOX_SIZE = (ZONE_SIZE - 2 * ZONE_BUFFER) / 5;
+var ZONE_LINE_WIDTH = ZONE_SIZE/ 75;
+var ZONE_FILL = "white";
+var ZONE_COLOR = "black";
+
+// pitch constants
+var PITCH_RADIUS = 10;
+var PITCH_STROKE_WIDTH = 2;
 var BALL_COLOR = "green";
 var STRIKE_COLOR = "red";
 var IN_PLAY_COLOR = "blue";
 var PROSPECTIVE_COLOR = "yellow";
+
+// bases constants
+var BASES_PAPER_SIZE = document.getElementById("basesParent").clientWidth;
+var BASE_SIZE = BASES_PAPER_SIZE / 12;
+var FIRST_BASE = 0;
+var SECOND_BASE = 1;
+var THIRD_BASE = 2;
+var GRASS_COLOR = "green";
+var BASE_COLOR_EMPTY = "white";
+var BASE_COLOR_OCCUPIED = "red";
+
+// input view constants
+var PLAYER_INPUT_VIEW = "player";
+var PITCH_INPUT_VIEW = "pitch";
+var RESULT_INPUT_VIEW = "result";
+
+/* -------------------------- global variables --------------------------- */
 
 // object for pitch tracker view functions
 var ptView = {};
@@ -44,23 +62,25 @@ ptView.inputViews = {
         focus: "#paResultSelector"
     }
 };
-var PLAYER_INPUT_VIEW = "player";
-var PITCH_INPUT_VIEW = "pitch";
-var RESULT_INPUT_VIEW = "result";
 
 // initialize the current view to the player input view
 ptView.currentInputView = PLAYER_INPUT_VIEW;
 
 // global variables for the papers
 ptView.paper = {};
-ptView.paper.zone = null;
-ptView.paper.bases = null;
+ptView.paper.zonePaper = null;
+ptView.paper.basesPaper = null;
+
+// global variable for an array of bases for future color changes
+ptView.bases = [];
+
+/* -------------------------- initialization of the view ----------------------- */
 
 // on the initial load draws the Raphael graphics
 window.onload = function() {
     // helper function to get the location of the nth zone
     function zoneLoc(n) {
-        return BUFFER + n * BOX_SIZE;
+        return ZONE_BUFFER + n * BOX_SIZE;
     }
 
     // helper function to draw a one directional line through the Raphael path function
@@ -86,56 +106,57 @@ window.onload = function() {
 
 
     function drawDiamond(paper, centerX, centerY, width, fill) {
-        return paper.path("M" + (centerX - width) + "," + centerY + "l" + width + "," + (-width) +
-            "l" + width + "," + width + "l" + (-width) + "," + width + "Z").attr({
-                fill: fill,
-                stroke: "black",
-                "stroke-width":5
-            });
+        return paper.path("M" + (centerX - width) + "," + centerY + "l" + width + "," + (-width) + "l" + width + "," + width + "l" + (-width) + "," + width + "Z").attr({
+            fill: fill,
+            stroke: "black",
+            "stroke-width":5
+        });
     }
 
     // create the zone paper object
-    ptView.paper.zone = createPaper("zoneParent", "zone", ZONE_SIZE);
+    ptView.paper.zonePaper = createPaper("zoneParent", "zone", ZONE_SIZE);
 
-    // create main boxes
-    ptView.paper.zone.rect(BUFFER, BUFFER, ZONE_SIZE- 2 * BUFFER, ZONE_SIZE- 2 * BUFFER).attr({
-        fill: BOX_FILL,
-        stroke: BOX_COLOR,
-        "stroke-width":LINE_WIDTH
+    // draw outside box
+    ptView.paper.zonePaper.rect(ZONE_BUFFER, ZONE_BUFFER, ZONE_SIZE - 2 * ZONE_BUFFER, ZONE_SIZE - 2 * ZONE_BUFFER).attr({
+        fill: ZONE_FILL,
+        stroke: ZONE_COLOR,
+        "stroke-width":ZONE_LINE_WIDTH
     });
-    ptView.paper.zone.rect(BUFFER + BOX_SIZE, BUFFER + BOX_SIZE, 3 * BOX_SIZE, 3 * BOX_SIZE).attr({
-        fill: BOX_FILL,
-        stroke: BOX_COLOR,
-        "stroke-width":(LINE_WIDTH / 2)
+
+    // draw inside box (the strike zone)
+    ptView.paper.zonePaper.rect(ZONE_BUFFER + BOX_SIZE, ZONE_BUFFER + BOX_SIZE, 3 * BOX_SIZE, 3 * BOX_SIZE).attr({
+        fill: ZONE_FILL,
+        stroke: ZONE_COLOR,
+        "stroke-width":(ZONE_LINE_WIDTH / 2)
     });
 
     // form a 3x3 grid on the interior of the strike zone
-    drawZoneLine(ptView.paper.zone, 2, 1, 2, 4, BOX_COLOR, LINE_WIDTH / 3); // vertical left
-    drawZoneLine(ptView.paper.zone, 3, 1, 3, 4, BOX_COLOR, LINE_WIDTH / 3); // vertical right
-    drawZoneLine(ptView.paper.zone, 1, 2, 4, 2, BOX_COLOR, LINE_WIDTH / 3); // horizontal top
-    drawZoneLine(ptView.paper.zone, 1, 3, 4, 3, BOX_COLOR, LINE_WIDTH / 3); // horizontal bottom
+    drawZoneLine(ptView.paper.zonePaper, 2, 1, 2, 4, ZONE_COLOR, ZONE_LINE_WIDTH / 3); // vertical left
+    drawZoneLine(ptView.paper.zonePaper, 3, 1, 3, 4, ZONE_COLOR, ZONE_LINE_WIDTH / 3); // vertical right
+    drawZoneLine(ptView.paper.zonePaper, 1, 2, 4, 2, ZONE_COLOR, ZONE_LINE_WIDTH / 3); // horizontal top
+    drawZoneLine(ptView.paper.zonePaper, 1, 3, 4, 3, ZONE_COLOR, ZONE_LINE_WIDTH / 3); // horizontal bottom
 
     // define the outside of the zone with diagonal lines on the corners and straight lines in the middle of the edges
     // perpendicular sides
-    drawZoneLine(ptView.paper.zone, 2.5, 0, 2.5, 1, BOX_COLOR, LINE_WIDTH / 3); // top middle
-    drawZoneLine(ptView.paper.zone, 2.5, 5, 2.5, 4, BOX_COLOR, LINE_WIDTH / 3); // bottom middle
-    drawZoneLine(ptView.paper.zone, 0, 2.5, 1, 2.5, BOX_COLOR, LINE_WIDTH / 3); // middle left
-    drawZoneLine(ptView.paper.zone, 5, 2.5, 4, 2.5, BOX_COLOR, LINE_WIDTH / 3); // middle right
+    drawZoneLine(ptView.paper.zonePaper, 2.5, 0, 2.5, 1, ZONE_COLOR, ZONE_LINE_WIDTH / 3); // top middle
+    drawZoneLine(ptView.paper.zonePaper, 2.5, 5, 2.5, 4, ZONE_COLOR, ZONE_LINE_WIDTH / 3); // bottom middle
+    drawZoneLine(ptView.paper.zonePaper, 0, 2.5, 1, 2.5, ZONE_COLOR, ZONE_LINE_WIDTH / 3); // middle left
+    drawZoneLine(ptView.paper.zonePaper, 5, 2.5, 4, 2.5, ZONE_COLOR, ZONE_LINE_WIDTH / 3); // middle right
 
     // diagonal corners
-    drawZoneLine(ptView.paper.zone, 0, 0, 1, 1, BOX_COLOR, LINE_WIDTH / 3); // diagonal top left
-    drawZoneLine(ptView.paper.zone, 0, 5, 1, 4, BOX_COLOR, LINE_WIDTH / 3); // diagonal bottom left
-    drawZoneLine(ptView.paper.zone, 5, 0, 4, 1, BOX_COLOR, LINE_WIDTH / 3); // diagonal top right
-    drawZoneLine(ptView.paper.zone, 5, 5, 4, 4, BOX_COLOR, LINE_WIDTH / 3); // diagonal bottom right
+    drawZoneLine(ptView.paper.zonePaper, 0, 0, 1, 1, ZONE_COLOR, ZONE_LINE_WIDTH / 3); // diagonal top left
+    drawZoneLine(ptView.paper.zonePaper, 0, 5, 1, 4, ZONE_COLOR, ZONE_LINE_WIDTH / 3); // diagonal bottom left
+    drawZoneLine(ptView.paper.zonePaper, 5, 0, 4, 1, ZONE_COLOR, ZONE_LINE_WIDTH / 3); // diagonal top right
+    drawZoneLine(ptView.paper.zonePaper, 5, 5, 4, 4, ZONE_COLOR, ZONE_LINE_WIDTH / 3); // diagonal bottom right
 
     // enter the bases paper into the DOM
-    ptView.paper.bases = createPaper("basesParent", "bases", BASES_PAPER_SIZE);
+    ptView.paper.basesPaper = createPaper("basesParent", "bases", BASES_PAPER_SIZE);
 
     // draw basepath diamond
-    drawDiamond(ptView.paper.bases, BASES_PAPER_SIZE / 2, BASES_PAPER_SIZE / 2, BASES_PAPER_SIZE / 2, "green");
-    drawDiamond(ptView.paper.bases, BASES_PAPER_SIZE - BASE_SIZE, BASES_PAPER_SIZE / 2, BASE_SIZE, "white"); // first base
-    drawDiamond(ptView.paper.bases, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_SIZE, "white"); // second base
-    drawDiamond(ptView.paper.bases, BASE_SIZE, BASES_PAPER_SIZE / 2, BASE_SIZE, "white"); // third base
+    drawDiamond(ptView.paper.basesPaper, BASES_PAPER_SIZE / 2, BASES_PAPER_SIZE / 2, BASES_PAPER_SIZE / 2, GRASS_COLOR);
+    ptView.bases[FIRST_BASE] = drawDiamond(ptView.paper.basesPaper, BASES_PAPER_SIZE - BASE_SIZE, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_COLOR_EMPTY);
+    ptView.bases[SECOND_BASE] = drawDiamond(ptView.paper.basesPaper, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_SIZE, BASE_COLOR_EMPTY);
+    ptView.bases[THIRD_BASE] = drawDiamond(ptView.paper.basesPaper, BASE_SIZE, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_COLOR_EMPTY);
 
     // attach listeners to the newly drawn objects
     attachListeners();
@@ -145,10 +166,10 @@ window.onload = function() {
 // pitch in the drawnPitches object
 // returns the object that was drawn
 ptView.drawPitch = function(location, color) {
-    return ptView.paper.zone.circle(location.x, location.y, PITCH_RADIUS).attr({
+    return ptView.paper.zonePaper.circle(location.x, location.y, PITCH_RADIUS).attr({
         fill: color,
         stroke: "black",
-        "stroke-width": 2
+        "stroke-width": PITCH_STROKE_WIDTH
     });
 }
 
@@ -286,6 +307,14 @@ ptView.setInputView = function(view) {
             }
         }
     }
+}
+
+ptView.setOccupiedBases = function(occupiedArray) {
+    ptView.bases.forEach(function(base, index) {
+        base.attr({
+            fill: (occupiedArray[index] ? BASE_COLOR_OCCUPIED : BASE_COLOR_EMPTY)
+        });
+    });
 }
 
 // initialize the view to show the player inputs

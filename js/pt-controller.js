@@ -13,6 +13,22 @@ attachListeners = function() {
         ptView.refocus();
     });
 
+    // submit button to submit pitcher and hitter
+    $("#submitPlayers").click(function() {
+        ptView.setOccupiedBases([true, false, true]);
+        var pitcherName = $("#pitcherNameInput").val();
+        var hitterName = $("#hitterNameInput").val();
+        if (pitcherName && hitterName) {
+            ptModel.setPlayers(pitcherName, hitterName);
+            $("#captionNames").text("Pitcher: " + pitcherName + ", Hitter: " + hitterName);
+            ptView.setInputView(PITCH_INPUT_VIEW);
+            clearPlayerInputs
+            ptView.clearMessage();
+        } else {
+            ptView.setError("Missing pitcher and/or hitter data")
+        }
+    });
+
     // submit button to submit pitches
     $("#submitPitch").click(function() {
         ptView.clearMessage();
@@ -40,21 +56,6 @@ attachListeners = function() {
             }
         } else {
             ptView.setError("There is missing data");
-        }
-    });
-
-    // submit button to submit pitcher and hitter
-    $("#submitPlayers").click(function() {
-        var pitcherName = $("#pitcherNameInput").val();
-        var hitterName = $("#hitterNameInput").val();
-        if (pitcherName && hitterName) {
-            ptModel.setPlayers(pitcherName, hitterName);
-            $("#captionNames").text("Pitcher: " + pitcherName + ", Hitter: " + hitterName);
-            ptView.setInputView(PITCH_INPUT_VIEW);
-            clearPlayerInputs
-            ptView.clearMessage();
-        } else {
-            ptView.setError("Missing pitcher and/or hitter data")
         }
     });
 
