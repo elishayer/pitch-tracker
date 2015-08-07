@@ -22,6 +22,9 @@ Model.date = sessionDate;
 // an object to hold functions and temporary data for the pt-mmodel
 var ptModel = {};
 
+// array to hold the currently occupied bases
+ptModel.bases = [false, false, false];
+
 // Takes an event and the boundingRect from the zone element, and converts the
 // data into a location object, which has a horizontal and vertical component.
 // Each are in the [0, 1] range, with (0.5, 0.5) representing middle-middle.
@@ -81,4 +84,29 @@ ptModel.getCount = function() {
 ptModel.setPaResult = function(paResult) {
 	Model.plateAppearances[paCount++].result = paResult;
 	ballCount = strikeCount = 0;
+}
+
+// advances the runners based on the plate appearance result
+// obvious problems, just an initial version
+ptModel.advanceRunners = function(result) {
+	if (result == "bb" || result == "1b") {
+		return ptModel.advanceRunnerNBases(1);
+	} else if (result == "2b") {
+		return ptModel.advanceRunnerNBases(2);
+	} else if (result == "3b") {
+		return ptModel.advanceRunnerNBases(3);
+	} else if (result == "hr") {
+		return ptModel.advanceRunnerNBases(4);
+	}
+}
+
+// temporary helper method to advance runners the number of bases the hitter advanced
+ptModel.advanceRunnerNBases = function(numBases) {
+	for (var i = 2; i >= 0; i--) {
+		console.log("base: " + (i + 1) + ", numbases: " + numBases);
+		console.log(ptModel.bases);
+		ptModel.bases[i] = (i >= numBases && ptModel.bases[i - numBases]) || ((i + 1) == numBases);
+	}
+	console.log(ptModel.bases);
+	return ptModel.bases;
 }

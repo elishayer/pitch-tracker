@@ -77,7 +77,7 @@ ptView.bases = [];
 /* -------------------------- initialization of the view ----------------------- */
 
 // on the initial load draws the Raphael graphics
-window.onload = function() {
+$(function() {
     // helper function to get the location of the nth zone
     function zoneLoc(n) {
         return ZONE_BUFFER + n * BOX_SIZE;
@@ -154,13 +154,22 @@ window.onload = function() {
 
     // draw basepath diamond
     drawDiamond(ptView.paper.basesPaper, BASES_PAPER_SIZE / 2, BASES_PAPER_SIZE / 2, BASES_PAPER_SIZE / 2, GRASS_COLOR);
-    ptView.bases[FIRST_BASE] = drawDiamond(ptView.paper.basesPaper, BASES_PAPER_SIZE - BASE_SIZE, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_COLOR_EMPTY);
-    ptView.bases[SECOND_BASE] = drawDiamond(ptView.paper.basesPaper, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_SIZE, BASE_COLOR_EMPTY);
-    ptView.bases[THIRD_BASE] = drawDiamond(ptView.paper.basesPaper, BASE_SIZE, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_COLOR_EMPTY);
+    ptView.bases[FIRST_BASE] = {
+        raphael: drawDiamond(ptView.paper.basesPaper, BASES_PAPER_SIZE - BASE_SIZE, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_COLOR_EMPTY),
+        occupied: false
+    };
+    ptView.bases[SECOND_BASE] = {
+        raphael: drawDiamond(ptView.paper.basesPaper, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_SIZE, BASE_COLOR_EMPTY),
+        occupied: false
+    };
+    ptView.bases[THIRD_BASE] = {
+        raphael: drawDiamond(ptView.paper.basesPaper, BASE_SIZE, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_COLOR_EMPTY),
+        occupied: false
+    };
 
     // attach listeners to the newly drawn objects
     attachListeners();
-}
+});
 
 // helper function to draw a pitch of a given color and record the
 // pitch in the drawnPitches object
@@ -204,16 +213,16 @@ ptView.drawProspectivePitch = function(location) {
 
 // function to submit the current prospective pitch
 ptView.submitPitch = function(pitch) {
-    if (!drawnPitches.prospectivePitch) {
+    if (!ptView.drawnPitches.prospectivePitch) {
         ptView.drawProspectivePitch(pitch.location);
     }
-    drawnPitches.prospectivePitch.attr({fill:ptView.getColor(pitch)});
-    drawnPitches.finalizedPitches.push({
-        raphael: drawnPitches.prospectivePitch,
+    ptView.drawnPitches.prospectivePitch.attr({fill:ptView.getColor(pitch)});
+    ptView.drawnPitches.finalizedPitches.push({
+        raphael: ptView.drawnPitches.prospectivePitch,
         pitch: pitch
     });
     ptView.incrementTablePitch(pitch);
-    drawnPitches.prospectivePitch = null;
+    ptView.drawnPitches.prospectivePitch = null;
 }
 
 // set the message, with the default color of black
@@ -250,7 +259,7 @@ ptView.incrementRow = function(row, text, rowClass) {
 // function to add a row to the table with the information about pitch
 ptView.incrementTablePitch = function(pitch) {
     var row = document.createElement("tr");
-    ptView.incrementRow(row, drawnPitches.finalizedPitches.length);
+    ptView.incrementRow(row, ptView.drawnPitches.finalizedPitches.length);
     ptView.incrementRow(row, pitch.velocity);
     ptView.incrementRow(row, pitch.type);
     ptView.incrementRow(row, pitch.result);
@@ -272,15 +281,15 @@ ptView.endPa = function(result) {
 // clear all pitches from drawnPitches
 ptView.clearPitches = function() {
     // removes each pitch from the zone
-    drawnPitches.finalizedPitches.forEach(function(pitch) {
+    ptView.drawnPitches.finalizedPitches.forEach(function(pitch) {
         pitch.raphael.remove();
     });
     // empties the array
-    drawnPitches.finalizedPitches = [];
+    ptView.drawnPitches.finalizedPitches = [];
     // if there is a prospective pitch, removes from the zone and nulls it out
-    if (drawnPitches.prospectivePitch) {
-        drawnPitches.prospectivePitch.raphael.remove();
-        drawnPitches.prospectivePitch = null;
+    if (ptView.drawnPitches.prospectivePitch) {
+        ptView.drawnPitches.prospectivePitch.raphael.remove();
+        ptView.drawnPitches.prospectivePitch = null;
     }
 }
 
@@ -309,11 +318,13 @@ ptView.setInputView = function(view) {
     }
 }
 
+// set the occupied bases graphically and internally
 ptView.setOccupiedBases = function(occupiedArray) {
     ptView.bases.forEach(function(base, index) {
-        base.attr({
-            fill: (occupiedArray[index] ? BASE_COLOR_OCCUPIED : BASE_COLOR_EMPTY)
+        base.raphael.attr({
+            fill: (occupiedArray[parseInt(index)] ? BASE_COLOR_OCCUPIED : BASE_COLOR_EMPTY)
         });
+        base.occupied = occupiedArray[index];
     });
 }
 

@@ -15,7 +15,6 @@ attachListeners = function() {
 
     // submit button to submit pitcher and hitter
     $("#submitPlayers").click(function() {
-        ptView.setOccupiedBases([true, false, true]);
         var pitcherName = $("#pitcherNameInput").val();
         var hitterName = $("#hitterNameInput").val();
         if (pitcherName && hitterName) {
@@ -106,6 +105,7 @@ clearResultInput = function() {
 setPaResult = function(result) {
     ptModel.setPaResult(result);
     ptView.endPa(result);
+    ptView.setOccupiedBases(ptModel.advanceRunners(result));
     ptView.setMessage("The plate appearance ended in a " + result);
     ptView.setInputView(PLAYER_INPUT_VIEW);
 }
