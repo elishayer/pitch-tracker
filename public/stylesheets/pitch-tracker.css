@@ -1,0 +1,14 @@
+div.message {
+    margin: auto;
+    text-align: center;
+    font-size: x-large;
+}
+
+th {
+    background-color: #eeeeee;
+}
+
+#title {
+	text-align: center;
+	padding-bottom: 15px;
+}

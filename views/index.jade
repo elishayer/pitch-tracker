@@ -1,5 +1,60 @@
 extends layout
 
 block content
-  h1= title
-  p Welcome to #{title}
+
+  // CONTAINER
+  .container
+
+    // TITLE
+    h1#title= title
+
+    // CONTENT
+    .row
+
+      // ZONE
+      .col-lg-4.col-md-8.col-xs-12
+        #zoneParent
+        #message.message
+
+      // /ZONE
+
+      // BUTTONS
+      .col-lg-3.col-md-4.col-xs.4
+
+        // BASES
+        #basesParent
+
+        #pitchInput
+          label(for='pitchTypeInput') Pitch Type Selector
+          select#pitchTypeInput.form-control
+            option(value='na') --- Select Pitch ---
+            option(value='4seam') Fastball (4-seam)
+            option(value='2seam') Fastball (2-seam)
+            option(value='sinker') Sinker
+            option(value='changeup') Changeup
+            option(value='curveball') Curveball
+            option(value='slider') Slider
+
+      // /BUTTONS
+
+      // RECENT DATA
+      .col-lg-5.col-md-12.col-xs-8.pitchdata
+
+        table#pitchesTable.table.table-bordered
+          caption
+            h3 Current Plate Appearance
+            #captionNames
+          thead
+            tr
+              th Num
+              th Velocity
+              th Pitch Type
+              th Pitch Result
+              th Count
+          tbody
+
+      // /RECENT DATA
+
+    // /CONTENT
+
+  // /CONTAINER
