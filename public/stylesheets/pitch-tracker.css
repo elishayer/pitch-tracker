@@ -12,3 +12,15 @@ th {
 	text-align: center;
 	padding-bottom: 15px;
 }
+
+/* Pitch Tracker Input Wrappers */
+
+/* Active */
+.ptInputActive {
+	visibility: visible;
+}
+
+/* Disabled and hidden */
+.ptInputDisabled {
+	visibility: hidden;
+}

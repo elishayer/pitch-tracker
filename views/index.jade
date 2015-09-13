@@ -21,10 +21,8 @@ block content
       // BUTTONS
       .col-lg-3.col-md-4.col-xs.4
 
-        // BASES
-        #basesParent
-
-        #pitchInput
+        // INPUTS
+        #pitchInput.ptInputActive
           label(for='pitchTypeInput') Pitch Type Selector
           select#pitchTypeInput.form-control
             option(value='na') --- Select Pitch ---
@@ -34,6 +32,44 @@ block content
             option(value='changeup') Changeup
             option(value='curveball') Curveball
             option(value='slider') Slider
+          br
+          label(for='pitchVelocityInput') Pitch Velocity
+          input#pitchVelocityInput.form-control(type='number', min='0', step='1', placeholder='Velocity')
+          br
+          label(for='pitchResultInput') Pitch Result Selector
+          select#pitchResultInput.form-control
+            option(value='na') --- Select Result ---
+            option(value='b') Ball
+            option(value='ss') Swinging Strike
+            option(value='cs') Called Strike
+            option(value='f') Foul
+            option(value='ft') Foul Tip
+            option(value='p') In Play
+          br
+          button#submitPitch.btn.btn-default(type='submit') Submit Pitch
+
+        #playerInput.ptInputDisabled
+          label(for='pitcherNameInput') Pitch Name
+          input#pitcherNameInput.form-control(type='text', placeholder='Pitcher name')
+          br
+          label(for='hitterNameInput') Hitter Name
+          input#hitterNameInput.form-control(text='type', placeholder='Hitter name')
+          br
+          button#submitPlayers.btn.btn-default(type='submit') Submit Players
+
+        #resultInput.ptInputDisabled
+          label(for='paResultSelector') Plate Appearance Result Selector
+          select#paResultSelector.form-control
+            option(value='na') --- Select Result ---
+            option(value='out') In-Play Out(s)
+            option(value='1b') Single
+            option(value='2b') Double
+            option(value='3b') Triple
+            option(value='hr') Home Run
+          br
+          button#submitResult.btn.btn-default(type='submit') Submit Result
+
+        // /INPUTS
 
       // /BUTTONS
 
@@ -52,6 +88,9 @@ block content
               th Pitch Result
               th Count
           tbody
+
+        // BASES
+        #basesParent
 
       // /RECENT DATA
 
