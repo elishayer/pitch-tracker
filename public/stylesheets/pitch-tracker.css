@@ -11,16 +11,17 @@ th {
 #title {
 	text-align: center;
 	padding-bottom: 15px;
+	text-decoration: underline;
 }
 
-/* Pitch Tracker Input Wrappers */
+/* ----- Pitch Tracker Input Wrappers ----- */
 
 /* Active */
 .ptInputActive {
-	visibility: visible;
+	display: block;
 }
 
 /* Disabled and hidden */
 .ptInputDisabled {
-	visibility: hidden;
+	display: none;
 }

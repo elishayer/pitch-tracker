@@ -22,10 +22,10 @@ block content
       .col-lg-3.col-md-4.col-xs.4
 
         // INPUTS
-        #pitchInput.ptInputActive
+        #pitchInput.ptInputDisabled
           label(for='pitchTypeInput') Pitch Type Selector
           select#pitchTypeInput.form-control
-            option(value='na') --- Select Pitch ---
+            option(value='') --- Select Pitch ---
             option(value='4seam') Fastball (4-seam)
             option(value='2seam') Fastball (2-seam)
             option(value='sinker') Sinker
@@ -38,7 +38,7 @@ block content
           br
           label(for='pitchResultInput') Pitch Result Selector
           select#pitchResultInput.form-control
-            option(value='na') --- Select Result ---
+            option(value='') --- Select Result ---
             option(value='b') Ball
             option(value='ss') Swinging Strike
             option(value='cs') Called Strike
@@ -48,8 +48,8 @@ block content
           br
           button#submitPitch.btn.btn-default(type='submit') Submit Pitch
 
-        #playerInput.ptInputDisabled
-          label(for='pitcherNameInput') Pitch Name
+        #playerInput.ptInputActive
+          label(for='pitcherNameInput') Pitcher Name
           input#pitcherNameInput.form-control(type='text', placeholder='Pitcher name')
           br
           label(for='hitterNameInput') Hitter Name
@@ -58,8 +58,8 @@ block content
           button#submitPlayers.btn.btn-default(type='submit') Submit Players
 
         #resultInput.ptInputDisabled
-          label(for='paResultSelector') Plate Appearance Result Selector
-          select#paResultSelector.form-control
+          label(for='paResultInput') Plate Appearance Result Selector
+          select#paResultInput.form-control
             option(value='na') --- Select Result ---
             option(value='out') In-Play Out(s)
             option(value='1b') Single
