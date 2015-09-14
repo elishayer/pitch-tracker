@@ -15,4 +15,3 @@ pt.currentPa = {};
 
 // the prospective pitch object for both the model and view
 pt.prospectivePitch = {};
-
