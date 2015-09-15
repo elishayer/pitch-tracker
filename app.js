@@ -5,13 +5,26 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
-// database connection: mongoDB and Monk
+// database connection: mongoDB and Mongoose
 var mongo = require('mongodb');
-var monk = require('monk');
-var db = monk('localhost:27017/pitch-tracker');
+var mongoose = require('mongoose');
+
+// object to hold the models
+var models = {};
+
+// connect to the mongodb database
+mongoose.connect('mongodb://localhost:27017/pitch-tracker');
+
+// mongoose connection and event handlers
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function() {
+    console.log('database connection successful');
+    models.Pitch = require('./models').Pitch;
+});
 
 var routes = require('./routes/index');
-var schools = require('./routes/schools');
+var api = require('./routes/api');
 
 var app = express();
 
@@ -19,22 +32,22 @@ var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
-// uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// make db accessible to the router
+// make db and models accessible to the router
 app.use(function(req, res, next) {
     req.db = db;
+    req.models = models;
     next();
 });
 
 app.use('/', routes);
-app.use('/schools', schools);
+app.use('/api', api);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

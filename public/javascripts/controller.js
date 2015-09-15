@@ -33,14 +33,32 @@ $(document).ready(function() {
 	$('#submitPitch').click(function(event) {
 		var pitchLocation = pt.fn.getProspectivePitch();
 		if (pitchLocation) {
+			// collect all relevant from the DOM
 			var pitch = {
-				type: $('#pitchTypeInput').val(),
-				velocity: $('#pitchVelocityInput').val(),
-				location: pitchLocation,
-				result: $('#pitchResultInput').val()
+				type     : $('#pitchTypeInput').val(),
+				velocity : $('#pitchVelocityInput').val(),
+				xLoc     : pitchLocation.horizontal,
+				yLoc     : pitchLocation.vertical,
+				result   : $('#pitchResultInput').val()
 			}
+
+			// pitch data validation
 			if (pitch.type && pitch.velocity && pitch.result) {
-				// record data
+				// record data using AJAX to post
+				$.ajax({
+					type: 'POST',
+					data: pitch,
+					url: '/api/addpitch',
+					dataType: 'JSON'
+				}).done(function(response) {
+					if (response.msg === '') {
+						console.log(response);
+
+					} else {
+						alert('Error: ' + response.msg);
+					}
+				});
+
 				if (/* plate appearance is over*/ true) {
 					pt.fn.nextInputGroup();
 				}
