@@ -21,6 +21,7 @@ db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function() {
     console.log('database connection successful');
     models.Pitch = require('./models').Pitch;
+    models.PA = require('./models').PA;
 });
 
 var routes = require('./routes/index');

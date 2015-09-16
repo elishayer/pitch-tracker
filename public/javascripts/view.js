@@ -154,8 +154,8 @@ pt.fn.setMessage = function(text, color) {
 }
 
 // set the message and make it visible
-pt.fn.setError = function(errorText) {
-    pt.fn.setMessage("Error: " + errorText, ERROR_COLOR);
+pt.fn.setError = function(errorText, errorLabel) {
+    pt.fn.setMessage((errorLabel ? errorLabel : "Error: ") + errorText, ERROR_COLOR);
 }
 
 // make the message not visible
@@ -186,9 +186,10 @@ pt.fn.setInputGroup = function(activeGroupIndex) {
 }
 
 // sets the input group to the next in the series of input groups
-pt.fn.nextInputGroup = function() {
+// defaults to an advancement of 1 unless otherwise specified
+pt.fn.nextInputGroup = function(dGroup) {
     pt.fn.clearCurrentInputGroup();
-    pt.currentInputGroup = (pt.currentInputGroup + 1) % NUM_INPUT_GROUPS;
+    pt.currentInputGroup = (pt.currentInputGroup + (dGroup ? dGroup : 1)) % NUM_INPUT_GROUPS;
     pt.fn.setInputGroup(pt.currentInputGroup);
 }
 

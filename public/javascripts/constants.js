@@ -1,5 +1,24 @@
 // CONSTANTS ----------------------------------------------------------
 
+// constants to convert pitch results
+var BALL = 1;
+var SWINGING_STRIKE = 2;
+var CALLED_STRIKE = 3;
+var FOUL = 4;
+var FOUL_TIP = 5;
+var IN_PLAY = 6;
+
+// constants to convery pa results
+var SINGLE = 1;
+var DOUBLE = 2;
+var TRIPLE = 3;
+var HOME_RUN = 4;
+var IN_PLAY_OUT = 5;
+var ERROR = 6;
+var STIRKEOUT = 7;
+var WALK = 8;
+var HIT_BY_PITCH = 9;
+
 // zone constants
 var ZONE_PARENT = 'zoneParent';
 var ZONE_ID = 'zone';
