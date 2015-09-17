@@ -8,23 +8,34 @@
 var express = require('express');
 var router = express.Router();
 
+// ---------------------------------------- Constants
+var STATUS_OK = 200;
+var STATUS_ERROR = 500;
+
 // ---------------------------------------- Plate Appearance
 
 /* POST a new plate appearance */
 router.post('/addpa', function(req, res) {
-	console.log('adding a pa');
-	var pa = new req.models.PA({
-		// start date by default
-		// TODO: game by id
-		// TODO: pitcher by id
-		// TODO: hitter by id
-	});
-	console.log('pa created');
-	pa.save(function(err, pa) {
+	// TODO: validation
+	new req.models.PA(req.body).save(function(err, pa) {
 		if (err) {
-			return console.error(err);
+			res.status(STATUS_ERROR).send({ msg: 'error: ' + err });
 		} else {
-			res.send((err === null) ? { msg: '', id: pa._id } : { msg: 'error: ' + err });
+			res.status(STATUS_OK).send({
+				msg : '',
+				pa  : pa.toObject()
+			});
+		}
+	});
+});
+
+/* POST the result and the end time of a plate appearance */
+router.post('/finalizepa', function(req, res) {
+	req.models.PA.findByIdAndUpdate(req.body.pa, { $set: req.body}, { new : true}, function(err, doc) {
+		if (err) {
+			res.status(STATUS_ERROR).send({ msg: 'error: ' + err });
+		} else {
+			res.status(STATUS_OK).send({ msg: '' });
 		}
 	});
 });
@@ -42,20 +53,24 @@ router.get('/pitchlist', function(req, res) {
 /* POST a new pitch. */
 router.post('/addpitch', function(req, res) {
 	// TODO: validate pitch
-
 	new req.models.Pitch(req.body).save(function(err, pitch) {
 		if (err) {
-			return console.error(err);
+			res.status(STATUS_ERROR).send({ msg: 'error: ' + err })
 		} else {
-			// TODO: add pitch to the pitches array of the corresponding pa
-
+			// add the new pitch to its plate appearance array of pitches
+			req.models.PA.findByIdAndUpdate(pitch.pa, { $push: { "pitches" : pitch } },
+			{ safe: true, upsert: true }, function(err, pa) {
+				if (err) {
+					res.status(STATUS_ERROR).send({ msg: 'error: ' + err });
+				} else {
+					res.status(STATUS_OK).send({
+						msg: '',
+						pitch: pitch.toObject()
+					});
+				}
+			});
 		}
 	});
-});
-
-/* DELETE a pitch. */
-router.delete('/deletepitch/:id', function(req, res) {
-	// TODO: delete pitch and update corresponding plate appearance
 });
 
 module.exports = router;

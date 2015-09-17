@@ -39,8 +39,8 @@ var Team = mongoose.model('Team', TeamSchema);
 // ---------------------------------------- Plate Appearance
 var PASchema = new mongoose.Schema({
 	game         : mongoose.Schema.Types.ObjectId,
-	hitter       : mongoose.Schema.Types.ObjectId,
-	pitcher      : mongoose.Schema.Types.ObjectId,
+	hitter       : String, //mongoose.Schema.Types.ObjectId,
+	pitcher      : String, //mongoose.Schema.Types.ObjectId,
 	pitches      : [mongoose.Schema.Types.ObjectId],
 	result       : Number,
 	start        : Date,
@@ -56,8 +56,11 @@ var PitchSchema = new mongoose.Schema({
 	result       : Number,
 	xLoc         : Number,
 	yLoc         : Number,
+	balls        : Number,
+	strikes      : Number,
+	pitchNum     : Number,
 	pa           : mongoose.Schema.Types.ObjectId,
-	date         : { type: Date, default: Date.now }
+	date         : Date
 });
 
 var Pitch = mongoose.model('Pitch', PitchSchema);

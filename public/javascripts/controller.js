@@ -17,29 +17,23 @@ $(document).ready(function() {
 
 	// event listener for submitting the player input group
 	$('#submitPlayers').click(function() {
-		var pitcher = $('#pitcherNameInput').val();
-		var hitter = $('#hitterNameInput').val();
-		if (pitcher && hitter) {
-			$.ajax({
-				type: 'POST',
-				data: {},
-				url: '/api/addpa',
-				dataType: 'JSON'
-			}).done(function(response) {
-				if (response.msg === '') {
-					// initialize the plate appearance
-					pt.currentPa = {
-						id       : response.id,
-						hitter   : hitter,
-						pitcher  : pitcher,
-						strikes  : 0,
-						balls    : 0
-					}
-					pt.fn.clearMessage();
-					pt.fn.nextInputGroup();
-				} else {
-					pt.fn.setError("Error initializing the plate appearance: " + response.msg);
-				}
+		var data = {
+			pitcher : $('#pitcherNameInput').val(),
+			hitter  : $('#hitterNameInput').val(),
+			start   : pt.fn.now()
+		};
+		// basic validation
+		if (data.pitcher && data.hitter) {
+			pt.fn.post('/api/addpa', data, function(response) {
+				console.log(response);
+				// initialize the plate appearance
+				pt.fn.initializePa(response.id, response.pa.hitter, response.pa.pitcher);
+
+				// update the view with the new pa data
+				pt.fn.updatePlayers(response.pa.hitter, response.pa.pitcher);
+
+				pt.fn.clearMessage();
+				pt.fn.setInputGroup(PITCH_INPUT_GROUP);
 			});
 		} else {
 			pt.fn.setError('You must enter a pitcher and a hitter name');
@@ -56,34 +50,29 @@ $(document).ready(function() {
 				velocity : $('#pitchVelocityInput').val(),
 				xLoc     : pitchLocation.horizontal,
 				yLoc     : pitchLocation.vertical,
-				result   : $('#pitchResultInput').val(),
+				strikes  : pt.currentPa.strikes,
+				balls    : pt.currentPa.balls,
+				pitchNum : pt.currentPa.pitchNum,
+				result   : parseInt($('#pitchResultInput').val()),
 				pa       : pt.currentPa.id
 			}
 
-			// pitch data validation
+			// basic pitch data validation
 			if (pitch.type && pitch.velocity && pitch.result) {
 				// record data using AJAX to post
-				$.ajax({
-					type: 'POST',
-					data: pitch,
-					url: '/api/addpitch',
-					dataType: 'JSON'
-				}).done(function(response) {
-					// if there is no error
-					if (response.msg === '') {
-						// TODO: display the relevant information in the response
+				pt.fn.post('/api/addpitch', pitch, function(response) {
+					// TODO: display the pitch data
 
-						// update current plate appearance data
-						pt.fn.updateCurrentPA(pitch.result);
+					// update current plate appearance data
+					pt.fn.updateCurrentPa(pitch.result);
 
-						// set the plate appearance result (null if plate appearance isn't over)
-						pt.fn.setPlate
+					// update the states table
+					pt.fn.updateStateTable(response.pitch.balls, response.pitch.strikes, 0);
 
-						if (/* plate appearance is over*/ true) {
-							pt.fn.nextInputGroup();
-						}
-					} else {
-						alert("Error submitting the pitch: " + response.msg);
+					if (pitch.result === IN_PLAY) {
+						pt.fn.setInputGroup(RESULT_INPUT_GROUP);
+					} else if (pt.currentPa.result) {
+						pt.fn.finalizePa(pt.currentPa.result);
 					}
 				});
 			} else {
@@ -96,13 +85,10 @@ $(document).ready(function() {
 
 	// event listener for submitting the result input group
 	$('#submitResult').click(function(event) {
-		$.getJSON('/api/pitchlist', function(data) {
-			console.log(data);
-		});
 		var result = $('#paResultInput').val();
 		if (result) {
-			// record data
-			//pt.fn.nextInputGroup();
+			pt.fn.finalizePa(result);
+			pt.fn.setInputGroup(PLAYER_INPUT_GROUP);
 		} else {
 			pt.fn.setError('You must enter the result of the plate appearance');
 		}
@@ -115,6 +101,9 @@ $(document).ready(function() {
 	// set the visible input group and disables all other input groups
 	// inital visible input group is the player input group
 	pt.fn.setInputGroup(pt.currentInputGroup);
+
+	// initialize the game
+	//pt.fn.initializeGame();
 });
 
 // FUNCTIONS ----------------------------------------------------------
@@ -144,19 +133,77 @@ pt.fn.getProspectivePitch = function() {
 	return pt.prospectivePitch.location;
 }
 
-// helper function to update the currentPa based upon the most recent pitch
-pt.fn.updateCurrentPa = function(pitchResult) {
-	if (pitchResult === BALL) {
-		pa.currentPa.balls++;
-	} else if (pitchResult === SWINGING_STRIKE || pitchResult === CALLED_STRIKE ||
-	           pitchResult === FOUL_TIP ||
-	           (pitchResult === FOUL && pa.currentPa.strikes < 2)) {
-		pa.currentPa.strikes++;
+// helper function to initialize the currentPa for a new plate appearance
+pt.fn.initializePa = function(id, hitter, pitcher) {
+	pt.currentPa = {
+		id       : id,
+		hitter   : hitter,
+		pitcher  : pitcher,
+		strikes  : 0,
+		balls    : 0,
+		pitchNum : 0,
+		result   : null
 	}
 }
 
-pt.fn.setPaResult = function() {
-	if (pa.currentPa.balls === 4) {
-		
+// helper function to update the currentPa based upon the most recent pitch
+pt.fn.updateCurrentPa = function(pitchResult) {
+	// increment pitchNum, balls, and strikes as needed
+	pt.currentPa.pitchNum++;
+	if (pitchResult === BALL) {
+		pt.currentPa.balls++;
+	} else if (pitchResult === SWINGING_STRIKE ||
+		       pitchResult === CALLED_STRIKE ||
+	           pitchResult === FOUL_TIP ||
+	          (pitchResult === FOUL && pt.currentPa.strikes < 2)) {
+		pt.currentPa.strikes++;
 	}
+
+	// set result as needed based on balls, strikes, and pitch result
+	if (pt.currentPa.balls === 4) {
+		pt.currentPa.result = WALK;
+	} else if (pt.currentPa.strikes === 3) {
+		pt.currentPa.result = STRIKEOUT;
+	}
+}
+
+// helper function for date generateion, UTC format for standardization
+pt.fn.now = function() {
+	return new Date().toUTCString();
+}
+
+// helper function for POST requests
+pt.fn.post = function(url, data, callbackSuccess, callbackFailure) {
+	console.log('POSTing to %s', url);
+	$.ajax({
+		type       : 'POST',
+		data       : data,
+		url        : url,
+		dataType   : 'JSON',
+		statusCode : {
+			200: callbackSuccess,
+			500: (callbackFailure ? callbackFailure : function(response) {
+				console.log(response);
+				pt.fn.setError(response.msg);
+			})
+		}
+	});
+}
+
+// helper function to finalize a plate appearance
+pt.fn.finalizePa = function(paResult) {
+	pt.fn.post('api/finalizepa', {
+		pa     : pt.currentPa.id,
+		result : paResult,
+		end    : pt.fn.now()
+	}, function(response) {
+		// TODO: update the DOM
+
+		// TODO: base state
+
+		// TODO: out state
+
+		// set input group
+		pt.fn.setInputGroup(PLAYER_INPUT_GROUP);
+	})
 }
