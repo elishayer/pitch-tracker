@@ -8,6 +8,83 @@ block content
     // TITLE
     h1#title= title
 
+    // INFO BAR
+    .row
+      // CURRENT PLAYERS
+      .col-lg-4#Players
+        table.table
+          tbody
+            tr
+              td Pitcher:
+              td.player#pitcher
+            tr
+              td Hitter:
+              td.player#hitter
+
+      // BOX SCORE
+      .col-lg-4
+        table.table.boxscore#boxscore
+          thead
+            tr
+              td Team
+              td 1
+              td 2
+              td 3
+              td 4
+              td 5
+              td 6
+              td 7
+              td 8
+              td 9
+              td R
+              td H
+              td E
+          tbody
+            tr#boxScoreAway
+              td Away
+              td.active
+              td
+              td
+              td
+              td
+              td
+              td
+              td
+              td
+              td
+              td
+              td
+            tr#boxScoreHome
+              td Home
+              td
+              td
+              td
+              td
+              td
+              td
+              td
+              td
+              td
+              td
+              td
+              td
+
+      // CURRENT STATE
+      .col-lg-4#state
+        table.table#stateTable
+          thead
+            tr
+              td Balls
+              td Strikes
+              td Outs
+          tbody
+            tr
+              td#balls 0
+              td#strikes 0
+              td#outs 0
+
+    // /INFO BAR
+
     // CONTENT
     .row
 

@@ -25,3 +25,18 @@ th {
 .ptInputDisabled {
 	display: none;
 }
+
+
+/* ----- Pitch Tracker Info Bar ----- */
+.boxscore>tbody>tr>td, .boxscore>thead>tr>td {
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+
+.boxscore>tbody>tr>td.active {
+	background-color: #970000;
+}
+
+.player {
+	font-weight: bold;
+}

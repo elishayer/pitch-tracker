@@ -185,14 +185,6 @@ pt.fn.setInputGroup = function(activeGroupIndex) {
     });
 }
 
-// sets the input group to the next in the series of input groups
-// defaults to an advancement of 1 unless otherwise specified
-pt.fn.nextInputGroup = function(dGroup) {
-    pt.fn.clearCurrentInputGroup();
-    pt.currentInputGroup = (pt.currentInputGroup + (dGroup ? dGroup : 1)) % NUM_INPUT_GROUPS;
-    pt.fn.setInputGroup(pt.currentInputGroup);
-}
-
 // clears the inputs related to the specified by index input group
 pt.fn.clearInputGroup = function(index) {
     $.each(INPUT_GROUPS[index].inputs, function(i, input) {
@@ -203,4 +195,23 @@ pt.fn.clearInputGroup = function(index) {
 // helper function to clear the current input group
 pt.fn.clearCurrentInputGroup = function() {
     pt.fn.clearInputGroup(pt.currentInputGroup);
+}
+
+// INFO BAR FUNCTIONS -------------------------------------------------
+pt.fn.updateBoxScore = function() {
+
+}
+
+// updates the state table with the number of balls, strikes, outs
+pt.fn.updateStateTable = function(balls, strikes, outs) {
+    console.log('updating state table');
+    $('#stateTable #balls').text(balls);
+    $('#stateTable #strikes').text(strikes);
+    $('#stateTable #outs').text(outs);
+}
+
+// updates the player names in the info bar
+pt.fn.updatePlayers = function(hitterName, pitcherName) {
+    $('#hitter').text(hitterName);
+    $('#pitcher').text(pitcherName);
 }
