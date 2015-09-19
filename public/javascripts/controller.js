@@ -76,10 +76,10 @@ $(document).ready(function() {
 					}
 				});
 			} else {
-				pt.fn.setError('You must enter the pitch type, velocity, and result');
+				pt.fn.setError('You must enter the pitch type, velocity, and result', 'Error: ');
 			}
 		} else {
-			pt.fn.setError('You must enter a pitch location by clicking on the zone');
+			pt.fn.setError('You must enter a pitch location by clicking on the zone', 'Error: ');
 		}
 	});
 
@@ -90,7 +90,7 @@ $(document).ready(function() {
 			pt.fn.finalizePa(result);
 			pt.fn.setInputGroup(PLAYER_INPUT_GROUP);
 		} else {
-			pt.fn.setError('You must enter the result of the plate appearance');
+			pt.fn.setError('You must enter the result of the plate appearance', 'Error: ');
 		}
 	});
 
@@ -184,7 +184,7 @@ pt.fn.post = function(url, data, callbackSuccess, callbackFailure) {
 			200: callbackSuccess,
 			500: (callbackFailure ? callbackFailure : function(response) {
 				console.log(response);
-				pt.fn.setError(response.msg);
+				pt.fn.setError(JSON.parse(response.responseText).msg);
 			})
 		}
 	});

@@ -15,7 +15,7 @@ var TRIPLE = 3;
 var HOME_RUN = 4;
 var IN_PLAY_OUT = 5;
 var ERROR = 6;
-var STIRKEOUT = 7;
+var STRIKEOUT = 7;
 var WALK = 8;
 var HIT_BY_PITCH = 9;
 
@@ -67,7 +67,8 @@ var INPUT_GROUPS = [
 			'#pitcherNameInput',
 			'#hitterNameInput',
 			'#submitPlayers'
-		]
+		],
+		button: '#submitPlayers'
 	},
 	{
 		group: 'pitch',
@@ -77,7 +78,8 @@ var INPUT_GROUPS = [
 			'#pitchVelocityInput',
 			'#pitchResultInput',
 			'#submitPitch'
-		]
+		],
+		button: '#submitPitch'
 	},
 	{
 		group: 'result',
@@ -85,7 +87,8 @@ var INPUT_GROUPS = [
 		inputs: [
 			'#paResultInput',
 			'#submitResult'
-		]
+		],
+		button: '#'
 	}
 ]
 

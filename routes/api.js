@@ -12,14 +12,22 @@ var router = express.Router();
 var STATUS_OK = 200;
 var STATUS_ERROR = 500;
 
-// ---------------------------------------- Plate Appearance
+// ---------------------------------------- Functions
+
+// sends an error response, log the location of the error
+function sendError(res, err, description) {
+	console.log('ERROR! Description: %s. Error: %s', description, err);
+	res.status(STATUS_ERROR).send({ msg: err });
+}
+
+// ---------------------------------------- AJAX messages
 
 /* POST a new plate appearance */
 router.post('/addpa', function(req, res) {
 	// TODO: validation
 	new req.models.PA(req.body).save(function(err, pa) {
 		if (err) {
-			res.status(STATUS_ERROR).send({ msg: 'error: ' + err });
+			sendError(res, err, );
 		} else {
 			res.status(STATUS_OK).send({
 				msg : '',
@@ -33,7 +41,7 @@ router.post('/addpa', function(req, res) {
 router.post('/finalizepa', function(req, res) {
 	req.models.PA.findByIdAndUpdate(req.body.pa, { $set: req.body}, { new : true}, function(err, doc) {
 		if (err) {
-			res.status(STATUS_ERROR).send({ msg: 'error: ' + err });
+			sendError(res, err);
 		} else {
 			res.status(STATUS_OK).send({ msg: '' });
 		}
@@ -55,13 +63,13 @@ router.post('/addpitch', function(req, res) {
 	// TODO: validate pitch
 	new req.models.Pitch(req.body).save(function(err, pitch) {
 		if (err) {
-			res.status(STATUS_ERROR).send({ msg: 'error: ' + err })
+			sendError(res, err);
 		} else {
 			// add the new pitch to its plate appearance array of pitches
 			req.models.PA.findByIdAndUpdate(pitch.pa, { $push: { "pitches" : pitch } },
 			{ safe: true, upsert: true }, function(err, pa) {
 				if (err) {
-					res.status(STATUS_ERROR).send({ msg: 'error: ' + err });
+					sendError(res, err);
 				} else {
 					res.status(STATUS_OK).send({
 						msg: '',

@@ -155,7 +155,7 @@ pt.fn.setMessage = function(text, color) {
 
 // set the message and make it visible
 pt.fn.setError = function(errorText, errorLabel) {
-    pt.fn.setMessage((errorLabel ? errorLabel : "Error: ") + errorText, ERROR_COLOR);
+    pt.fn.setMessage((errorLabel ? errorLabel : "") + errorText, ERROR_COLOR);
 }
 
 // make the message not visible
@@ -178,21 +178,22 @@ pt.fn.setInputGroup = function(activeGroupIndex) {
         $wrapper.toggleClass(INPUT_ACTIVE, active);
         $wrapper.toggleClass(INPUT_DISABLED, !active);
 
-        // set the child inputs of inactive input groups to disabled
+        // set the child inputs and the button of inactive groups to disabled
         $.each(inputGroup.inputs, function(index, input) {
             $(input).prop('disabled', !active);
         });
+        $(inputGroup.button).prop('disabled', !active);
     });
 }
 
-// clears the inputs related to the specified by index input group
+// clears the inputs related to the specified-by-index input group
 pt.fn.clearInputGroup = function(index) {
     $.each(INPUT_GROUPS[index].inputs, function(i, input) {
         $(input).val('');
     });
 }
 
-// helper function to clear the current input group
+// helper function to clear the contents of the current input group
 pt.fn.clearCurrentInputGroup = function() {
     pt.fn.clearInputGroup(pt.currentInputGroup);
 }
