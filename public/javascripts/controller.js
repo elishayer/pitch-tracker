@@ -16,83 +16,13 @@ $(document).ready(function() {
 	});
 
 	// event listener for submitting the player input group
-	$('#submitPlayers').click(function() {
-		var data = {
-			pitcher : $('#pitcherNameInput').val(),
-			hitter  : $('#hitterNameInput').val(),
-			start   : pt.fn.now()
-		};
-		// basic validation
-		if (data.pitcher && data.hitter) {
-			pt.fn.post('/api/addpa', data, function(response) {
-				console.log(response);
-				// initialize the plate appearance
-				pt.fn.initializePa(response.id, response.pa.hitter, response.pa.pitcher);
-
-				// update the view with the new pa data
-				pt.fn.updatePlayers(response.pa.hitter, response.pa.pitcher);
-
-				pt.fn.clearMessage();
-				pt.fn.setInputGroup(PITCH_INPUT_GROUP);
-			});
-		} else {
-			pt.fn.setError('You must enter a pitcher and a hitter name');
-		}
-	});
+	pt.fn.attachInputGroupEventListeners(PLAYER_INPUT_GROUP, pt.fn.submitPlayers);
 
 	// event listener for submitting the pitch input group
-	$('#submitPitch').click(function(event) {
-		var pitchLocation = pt.fn.getProspectivePitch();
-		if (pitchLocation) {
-			// collect all relevant from the DOM
-			var pitch = {
-				type     : $('#pitchTypeInput').val(),
-				velocity : $('#pitchVelocityInput').val(),
-				xLoc     : pitchLocation.horizontal,
-				yLoc     : pitchLocation.vertical,
-				strikes  : pt.currentPa.strikes,
-				balls    : pt.currentPa.balls,
-				pitchNum : pt.currentPa.pitchNum,
-				result   : parseInt($('#pitchResultInput').val()),
-				pa       : pt.currentPa.id
-			}
-
-			// basic pitch data validation
-			if (pitch.type && pitch.velocity && pitch.result) {
-				// record data using AJAX to post
-				pt.fn.post('/api/addpitch', pitch, function(response) {
-					// TODO: display the pitch data
-
-					// update current plate appearance data
-					pt.fn.updateCurrentPa(pitch.result);
-
-					// update the states table
-					pt.fn.updateStateTable(response.pitch.balls, response.pitch.strikes, 0);
-
-					if (pitch.result === IN_PLAY) {
-						pt.fn.setInputGroup(RESULT_INPUT_GROUP);
-					} else if (pt.currentPa.result) {
-						pt.fn.finalizePa(pt.currentPa.result);
-					}
-				});
-			} else {
-				pt.fn.setError('You must enter the pitch type, velocity, and result', 'Error: ');
-			}
-		} else {
-			pt.fn.setError('You must enter a pitch location by clicking on the zone', 'Error: ');
-		}
-	});
+	pt.fn.attachInputGroupEventListeners(PITCH_INPUT_GROUP, pt.fn.submitPitch);
 
 	// event listener for submitting the result input group
-	$('#submitResult').click(function(event) {
-		var result = $('#paResultInput').val();
-		if (result) {
-			pt.fn.finalizePa(result);
-			pt.fn.setInputGroup(PLAYER_INPUT_GROUP);
-		} else {
-			pt.fn.setError('You must enter the result of the plate appearance', 'Error: ');
-		}
-	});
+	pt.fn.attachInputGroupEventListeners(RESULT_INPUT_GROUP, pt.fn.submitResult);
 
 	// INITIALIZATION -------------------------------------------------
 
@@ -106,7 +36,100 @@ $(document).ready(function() {
 	//pt.fn.initializeGame();
 });
 
-// FUNCTIONS ----------------------------------------------------------
+// EVENT LISTENERS ----------------------------------------------------
+
+// attaches event listeners to each member of the input group
+pt.fn.attachInputGroupEventListeners = function(inputGroupIndex, callback) {
+	var inputGroup = INPUT_GROUPS[inputGroupIndex];
+	$.each(inputGroup.inputs, function(index, input) {
+		$(input).keydown(function(event) {
+			if (event.keycode === ENTER_KEYCODE) {
+				callback();
+			}
+		})
+	});
+	$(inputGroup.button).click(callback);
+}
+
+// event listener for submitting the players
+pt.fn.submitPlayers = function() {
+	console.log('submitting players');
+	var data = {
+		pitcher : $('#pitcherNameInput').val(),
+		hitter  : $('#hitterNameInput').val(),
+		start   : pt.fn.now()
+	};
+	// basic validation
+	if (data.pitcher && data.hitter) {
+		pt.fn.post('/api/addpa', data, function(response) {
+			console.log(response);
+			// initialize the plate appearance
+			pt.fn.initializePa(response.pa._id, response.pa.hitter, response.pa.pitcher);
+
+			// update the view with the new pa data
+			pt.fn.updatePlayers(response.pa.hitter, response.pa.pitcher);
+
+			pt.fn.clearMessage();
+			pt.fn.setInputGroup(PITCH_INPUT_GROUP);
+		});
+	} else {
+		pt.fn.setError('You must enter a pitcher and a hitter name', 'Error: ');
+	}
+}
+
+pt.fn.submitPitch = function() {
+	var pitchLocation = pt.fn.getProspectivePitch();
+	if (pitchLocation) {
+		// collect all relevant from the DOM
+		var pitch = {
+			type     : $('#pitchTypeInput').val(),
+			velocity : $('#pitchVelocityInput').val(),
+			xLoc     : pitchLocation.horizontal,
+			yLoc     : pitchLocation.vertical,
+			strikes  : pt.currentPa.strikes,
+			balls    : pt.currentPa.balls,
+			pitchNum : pt.currentPa.pitchNum,
+			result   : parseInt($('#pitchResultInput').val()),
+			pa       : pt.currentPa.id
+		}
+
+		// basic pitch data validation
+		if (pitch.type && pitch.velocity && pitch.result) {
+			// record data using AJAX to post
+			pt.fn.post('/api/addpitch', pitch, function(response) {
+				// TODO: display the pitch data
+
+				// update current plate appearance data
+				pt.fn.updateCurrentPa(pitch.result);
+
+				// update the states table
+				pt.fn.updateStateTable(pt.currentPa.balls, pt.currentPa.strikes, 0);
+
+				if (pitch.result === IN_PLAY) {
+					pt.fn.setInputGroup(RESULT_INPUT_GROUP);
+				} else if (pt.currentPa.result) {
+					pt.fn.finalizePa(pt.currentPa.result);
+				}
+			});
+		} else {
+			pt.fn.setError('You must enter the pitch type, velocity, and result', 'Error: ');
+		}
+	} else {
+		pt.fn.setError('You must enter a pitch location by clicking on the zone', 'Error: ');
+	}
+}
+
+pt.fn.submitResult = function(event) {
+	var result = $('#paResultInput').val();
+	if (result) {
+		pt.fn.finalizePa(result);
+		pt.fn.setInputGroup(PLAYER_INPUT_GROUP);
+	} else {
+		pt.fn.setError('You must enter the result of the plate appearance', 'Error: ');
+	}
+}
+
+//  HELPER FUNCTIONS --------------------------------------------------
 
 /* helper function to convert the x and y coordinates of the click event
  * on the zone into the location of a pitch. Returns a horizontal and a
