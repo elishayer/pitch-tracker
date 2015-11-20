@@ -10,17 +10,6 @@ block content
 
     // INFO BAR
     .row#infoBar
-      // CURRENT PLAYERS
-      .col-lg-4#Players
-        table.table
-          tbody
-            tr
-              td Pitcher:
-              td.player#pitcher
-            tr
-              td Hitter:
-              td.player#hitter
-
       // BOX SCORE
       .col-lg-4
         table.table.boxscore#boxscore
@@ -68,6 +57,21 @@ block content
               td 0
               td 0
               td 0
+
+      // BASES
+      .col-lg-1#state
+        #basesParent
+
+      // CURRENT PLAYERS
+      .col-lg-3#Players
+        table.table
+          tbody
+            tr
+              td Pitcher:
+              td.player#pitcher
+            tr
+              td Hitter:
+              td.player#hitter
 
       // CURRENT STATE
       .col-lg-4#state
@@ -171,9 +175,6 @@ block content
               th Pitch Result
               th Count
           tbody
-
-        // BASES
-        #basesParent
 
       // /RECENT DATA
 

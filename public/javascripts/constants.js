@@ -40,8 +40,8 @@ var PITCH_STROKE_COLOR = 'black';
 
 // bases constants
 var BASES_PAPER_SIZE = document.getElementById('basesParent').clientWidth;
-var BASE_SIZE = BASES_PAPER_SIZE / 12;
-var BASE_STROKE_WIDTH = 5;
+var BASE_SIZE = BASES_PAPER_SIZE / 8;
+var BASE_STROKE_WIDTH = 2;
 var FIRST_BASE = 0;
 var SECOND_BASE = 1;
 var THIRD_BASE = 2;
@@ -88,7 +88,7 @@ var INPUT_GROUPS = [
 			'#paResultInput',
 			'#submitResult'
 		],
-		button: '#'
+		button: '#submitResult'
 	}
 ]
 

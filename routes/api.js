@@ -27,7 +27,7 @@ router.post('/addpa', function(req, res) {
 	// TODO: validation
 	new req.models.PA(req.body).save(function(err, pa) {
 		if (err) {
-			sendError(res, err, );
+			sendError(res, err);
 		} else {
 			res.status(STATUS_OK).send({
 				msg : '',

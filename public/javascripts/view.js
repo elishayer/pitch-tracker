@@ -121,9 +121,9 @@ pt.fn.convertLocation = function(location) {
 
 // a helper function to determine the appropriate color for a pitch
 pt.fn.getColor = function(pitch) {
-    if (pitch.result == 'b') {
+    if (pitch.result == BALL) {
         return BALL_COLOR;
-    } else if (pitch.result == 'p') {
+    } else if (pitch.result == IN_PLAY) {
         return IN_PLAY_COLOR;
     } else {
         return STRIKE_COLOR;
@@ -200,15 +200,20 @@ pt.fn.clearCurrentInputGroup = function() {
 
 // INFO BAR FUNCTIONS -------------------------------------------------
 pt.fn.updateBoxScore = function() {
-
+    $boxScore = $('#boxscore');
+    var $currInning = $boxScore.find('.active');
+    // TODO: get the actual number of runs
+    $currInning.text(0);
+    $currInning.toggleClass('active', false)
+    var $cells = $(pt.inning.top ? '#boxScoreAway' : '#boxScoreHome').find('td');
+    $($cells[pt.inning.num]).toggleClass('active', true);
 }
 
 // updates the state table with the number of balls, strikes, outs
-pt.fn.updateStateTable = function(balls, strikes, outs) {
-    console.log('updating state table');
-    $('#stateTable #balls').text(balls);
-    $('#stateTable #strikes').text(strikes);
-    $('#stateTable #outs').text(outs);
+pt.fn.updateStateTable = function() {
+    $('#stateTable #balls').text(pt.currentPa.balls);
+    $('#stateTable #strikes').text(pt.currentPa.strikes);
+    $('#stateTable #outs').text(pt.outs);
 }
 
 // updates the player names in the info bar

@@ -15,3 +15,10 @@ pt.currentPa = {};
 
 // the prospective pitch object for both the model and view
 pt.prospectivePitch = {};
+
+// states for inning, outs
+pt.inning = {
+	num : 1,
+	top : true
+}
+pt.outs   = 0; 

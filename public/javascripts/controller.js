@@ -53,7 +53,6 @@ pt.fn.attachInputGroupEventListeners = function(inputGroupIndex, callback) {
 
 // event listener for submitting the players
 pt.fn.submitPlayers = function() {
-	console.log('submitting players');
 	var data = {
 		pitcher : $('#pitcherNameInput').val(),
 		hitter  : $('#hitterNameInput').val(),
@@ -62,7 +61,6 @@ pt.fn.submitPlayers = function() {
 	// basic validation
 	if (data.pitcher && data.hitter) {
 		pt.fn.post('/api/addpa', data, function(response) {
-			console.log(response);
 			// initialize the plate appearance
 			pt.fn.initializePa(response.pa._id, response.pa.hitter, response.pa.pitcher);
 
@@ -97,19 +95,26 @@ pt.fn.submitPitch = function() {
 		if (pitch.type && pitch.velocity && pitch.result) {
 			// record data using AJAX to post
 			pt.fn.post('/api/addpitch', pitch, function(response) {
-				// TODO: display the pitch data
+				// set the prospective pitch color and store the pitch
+				pt.currentPa.pitches.push(pt.prospectivePitch.raphael.attr({
+					fill: pt.fn.getColor(pitch)
+				}));
+				pt.prospectivePitch = {};
 
 				// update current plate appearance data
 				pt.fn.updateCurrentPa(pitch.result);
 
 				// update the states table
-				pt.fn.updateStateTable(pt.currentPa.balls, pt.currentPa.strikes, 0);
+				pt.fn.updateStateTable();
 
 				if (pitch.result === IN_PLAY) {
 					pt.fn.setInputGroup(RESULT_INPUT_GROUP);
 				} else if (pt.currentPa.result) {
 					pt.fn.finalizePa(pt.currentPa.result);
 				}
+
+				// reset the message
+				pt.fn.clearMessage();
 			});
 		} else {
 			pt.fn.setError('You must enter the pitch type, velocity, and result', 'Error: ');
@@ -120,7 +125,7 @@ pt.fn.submitPitch = function() {
 }
 
 pt.fn.submitResult = function(event) {
-	var result = $('#paResultInput').val();
+	var result = parseInt($('#paResultInput').val());
 	if (result) {
 		pt.fn.finalizePa(result);
 		pt.fn.setInputGroup(PLAYER_INPUT_GROUP);
@@ -162,6 +167,7 @@ pt.fn.initializePa = function(id, hitter, pitcher) {
 		id       : id,
 		hitter   : hitter,
 		pitcher  : pitcher,
+		pitches  : [],
 		strikes  : 0,
 		balls    : 0,
 		pitchNum : 0,
@@ -206,11 +212,30 @@ pt.fn.post = function(url, data, callbackSuccess, callbackFailure) {
 		statusCode : {
 			200: callbackSuccess,
 			500: (callbackFailure ? callbackFailure : function(response) {
+				console.log('Error occured: ');
 				console.log(response);
 				pt.fn.setError(JSON.parse(response.responseText).msg);
 			})
 		}
 	});
+}
+
+// increments the outs and makes correspdoning state table
+pt.fn.incrementOuts = function() {
+	// add an out
+	pt.outs++;
+
+	// if the inning is over
+	if (pt.outs === 3) {
+		// outs back to zero
+		pt.outs = 0;
+		// increment inning if the bottom just ended
+		pt.inning.num += (!pt.inning.top)
+		// flip top/bottom
+		pt.inning.top = !pt.inning.top;
+		// update the boxscore
+		pt.fn.updateBoxScore();
+	}
 }
 
 // helper function to finalize a plate appearance
@@ -220,11 +245,23 @@ pt.fn.finalizePa = function(paResult) {
 		result : paResult,
 		end    : pt.fn.now()
 	}, function(response) {
-		// TODO: update the DOM
+		// remove the pitches from the previous plate appearance
+		$.each(pt.currentPa.pitches, function(index, pitch) {
+			pitch.remove();
+		});
+
+		// initialize a new plate appearance
+		pt.fn.initializePa();
 
 		// TODO: base state
 
-		// TODO: out state
+		// update the out state
+		if (paResult === IN_PLAY_OUT || paResult === STRIKEOUT) {
+			pt.fn.incrementOuts();
+		}
+
+		// update the states table
+		pt.fn.updateStateTable();
 
 		// set input group
 		pt.fn.setInputGroup(PLAYER_INPUT_GROUP);
