@@ -87,16 +87,16 @@ pt.fn.drawBasesPaper = function() {
     // draw basepath diamond
     pt.fn.drawDiamond(pt.papers.basesPaper, BASES_PAPER_SIZE / 2, BASES_PAPER_SIZE / 2, BASES_PAPER_SIZE / 2, GRASS_COLOR);
     pt.bases[FIRST_BASE] = {
-        raphael: pt.fn.drawDiamond(pt.papers.basesPaper, BASES_PAPER_SIZE - BASE_SIZE, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_COLOR_EMPTY),
-        occupied: false
+        raphael : pt.fn.drawDiamond(pt.papers.basesPaper, BASES_PAPER_SIZE - BASE_SIZE, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_COLOR_EMPTY),
+        player  : null
     };
     pt.bases[SECOND_BASE] = {
-        raphael: pt.fn.drawDiamond(pt.papers.basesPaper, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_SIZE, BASE_COLOR_EMPTY),
-        occupied: false
+        raphael : pt.fn.drawDiamond(pt.papers.basesPaper, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_SIZE, BASE_COLOR_EMPTY),
+        player  : null
     };
     pt.bases[THIRD_BASE] = {
-        raphael: pt.fn.drawDiamond(pt.papers.basesPaper, BASE_SIZE, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_COLOR_EMPTY),
-        occupied: false
+        raphael : pt.fn.drawDiamond(pt.papers.basesPaper, BASE_SIZE, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_COLOR_EMPTY),
+        player  : null
     };
 }
 
@@ -199,14 +199,30 @@ pt.fn.clearCurrentInputGroup = function() {
 }
 
 // INFO BAR FUNCTIONS -------------------------------------------------
+// update the boxscore for the number of runs and updates the act cell
 pt.fn.updateBoxScore = function() {
-    $boxScore = $('#boxscore');
-    var $currInning = $boxScore.find('.active');
-    // TODO: get the actual number of runs
-    $currInning.text(0);
-    $currInning.toggleClass('active', false)
-    var $cells = $(pt.inning.top ? '#boxScoreAway' : '#boxScoreHome').find('td');
-    $($cells[pt.inning.num]).toggleClass('active', true);
+    // cache jQuery objects
+    $boxscore = $('#boxscore');
+    $away = $boxscore.find('#boxScoreAway');
+    $home = $boxscore.find('#boxScoreHome');
+
+    // for each inning this far in the game
+    for (var i = 0; i < pt.currInning.num - 1; i++) {
+        $($away.find('td')[i + 1]).text(pt.innings[i][0]);
+        $($home.find('td')[i + 1]).text(pt.innings[i][1]);
+    }
+
+    // special case the current inning
+    if (!top || pt.innings[pt.currInning.num - 1][0]) {
+        $($away.find('td')[pt.currInning.num]).text(pt.innings[pt.currInning.num - 1][0]);
+    }
+    if (!top && pt.innings[pt.currInning.num - 1][1]) {
+        $($home.find('td')[pt.currInning.num]).text(pt.innings[pt.currInning.num - 1][1]);
+    }
+
+    // update the active cell
+    $boxscore.find('.active').toggleClass('active', false);
+    $((pt.currInning.top ? $away : $home).find('td')[pt.currInning.num]).toggleClass('active', true);
 }
 
 // updates the state table with the number of balls, strikes, outs
@@ -220,4 +236,34 @@ pt.fn.updateStateTable = function() {
 pt.fn.updatePlayers = function(hitterName, pitcherName) {
     $('#hitter').text(hitterName);
     $('#pitcher').text(pitcherName);
+}
+
+// CURRENT PA TABLE FUNCTIONS -----------------------------------------
+pt.fn.appendPaTableRow = function(num, velocity, type, result) {
+    // create a tr element for the information
+    var row = $('<tr>');
+
+    // add each part of the table to the row in a td element
+    $('<td>').text(num).appendTo(row);
+    $('<td>').text(velocity).appendTo(row);
+    $('<td>').text(PITCH_TYPE_MAP[type]).appendTo(row);
+    $('<td>').text(PITCH_RESULT_MAP[result]).appendTo(row);
+
+    // append the row to the table
+    $('#pitchesTable').append(row);
+}
+
+pt.fn.clearPaTable = function() {
+    $('#pitchesTable > tbody').remove();
+}
+
+// CURRENT PA TABLE FUNCTIONS -----------------------------------------
+
+// show the occupied bases in the bases paper
+pt.fn.updateBases = function() {
+    $.each(pt.bases, function(index, base) {
+        base.raphael.attr({
+            fill : (base.player ? BASE_COLOR_OCCUPIED : BASE_COLOR_EMPTY)
+        });
+    });
 }

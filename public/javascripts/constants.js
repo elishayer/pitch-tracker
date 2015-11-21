@@ -8,6 +8,34 @@ var FOUL = 4;
 var FOUL_TIP = 5;
 var IN_PLAY = 6;
 
+// map to convert from pitch result to text
+var PITCH_RESULT_MAP = {
+	1 : "Ball",
+	2 : "Swinging Strike",
+	3 : "Called Strike",
+	4 : "Foul",
+	5 : "Foul Tip",
+	6 : "In Play"
+}
+
+// constants to convert pitch types
+var FOUR_SEAM_FAST = 1;
+var TWO_SEAM_FAST = 2;
+var SINKER = 3;
+var CHANGEUP = 4;
+var CURVEBALL = 5;
+var SLIDER = 6;
+
+// map to convert from pitch type to text
+var PITCH_TYPE_MAP = {
+	1 : "4-Seam Fastball",
+	2 : "2-Seam Fastball",
+	3 : "Sinker",
+	4 : "Changeup",
+	5 : "Curveball",
+	6 : "Slider"
+}
+
 // constants to convery pa results
 var SINGLE = 1;
 var DOUBLE = 2;
@@ -18,6 +46,19 @@ var ERROR = 6;
 var STRIKEOUT = 7;
 var WALK = 8;
 var HIT_BY_PITCH = 9;
+
+// map to convert from pa result to text
+var PA_RESULT_MAP = {
+	1 : "Single",
+	2 : "Double",
+	3 : "Triple",
+	4 : "Home Run",
+	5 : "In Play Out(s)",
+	6 : "Error",
+	7 : "Strikeout",
+	8 : "Walk",
+	9 : "Hit By Pitch",
+}
 
 // zone constants
 var ZONE_PARENT = 'zoneParent';
@@ -45,6 +86,7 @@ var BASE_STROKE_WIDTH = 2;
 var FIRST_BASE = 0;
 var SECOND_BASE = 1;
 var THIRD_BASE = 2;
+var HOME_BASE = 3;
 var GRASS_COLOR = 'green';
 var BASE_COLOR_EMPTY = 'white';
 var BASE_COLOR_OCCUPIED = 'red';

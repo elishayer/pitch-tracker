@@ -16,8 +16,13 @@ pt.currentPa = {};
 // the prospective pitch object for both the model and view
 pt.prospectivePitch = {};
 
+// holds the number of runs per game for 9 innings
+pt.innings = [
+	[0, 0],	[0, 0],	[0, 0],	[0, 0],	[0, 0],	[0, 0],	[0, 0],	[0, 0],	[0, 0]
+];
+
 // states for inning, outs
-pt.inning = {
+pt.currInning = {
 	num : 1,
 	top : true
 }

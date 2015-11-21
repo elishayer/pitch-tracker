@@ -113,6 +113,10 @@ pt.fn.submitPitch = function() {
 					pt.fn.finalizePa(pt.currentPa.result);
 				}
 
+				// add to the current pa table. +1 adjustment to 1 index
+				pt.fn.appendPaTableRow(pitch.strikes + pitch.balls + 1, pitch.velocity,
+					pitch.type, pitch.result);
+
 				// reset the message
 				pt.fn.clearMessage();
 			});
@@ -220,21 +224,32 @@ pt.fn.post = function(url, data, callbackSuccess, callbackFailure) {
 	});
 }
 
-// increments the outs and makes correspdoning state table
+// ends an inning
+pt.fn.finalizeInning = function() {
+	// outs back to zero
+	pt.outs = 0;
+
+	// increment inning if the bottom just ended
+	pt.currInning.num += (!pt.currInning.top);
+
+	// flip top/bottom
+	pt.currInning.top = !pt.currInning.top;
+
+	// set each base to empty
+	$.each(pt.bases, function(i, base) {
+		base.player = null;
+	});
+	
+}
+
+// increments the outs and makes correspdoning state changes
 pt.fn.incrementOuts = function() {
 	// add an out
 	pt.outs++;
 
-	// if the inning is over
+	// if the half-inning is over
 	if (pt.outs === 3) {
-		// outs back to zero
-		pt.outs = 0;
-		// increment inning if the bottom just ended
-		pt.inning.num += (!pt.inning.top)
-		// flip top/bottom
-		pt.inning.top = !pt.inning.top;
-		// update the boxscore
-		pt.fn.updateBoxScore();
+		pt.fn.finalizeInning();
 	}
 }
 
@@ -250,20 +265,75 @@ pt.fn.finalizePa = function(paResult) {
 			pitch.remove();
 		});
 
-		// initialize a new plate appearance
-		pt.fn.initializePa();
-
-		// TODO: base state
-
-		// update the out state
+		// update the out state or base state as appropriate
 		if (paResult === IN_PLAY_OUT || paResult === STRIKEOUT) {
 			pt.fn.incrementOuts();
+		} else {
+			pt.fn.advanceBaserunners(paResult);
 		}
 
-		// update the states table
+		// initialize a new plate appearance, update the states and pa tables
+		pt.fn.initializePa();
 		pt.fn.updateStateTable();
+		pt.fn.clearPaTable();
+		pt.fn.updateBases();
+		pt.fn.updateBoxScore();
 
 		// set input group
 		pt.fn.setInputGroup(PLAYER_INPUT_GROUP);
 	})
+}
+
+// advance the baserunners
+pt.fn.advanceBaserunners = function(paResult) {
+	if (paResult === WALK || paResult === HIT_BY_PITCH) {
+		pt.fn.implementWalk();
+	} else if (paResult === SINGLE || paResult === DOUBLE ||
+			paResult === TRIPLE || paResult === HOME_RUN) {
+		pt.fn.implementHit(paResult);
+	}
+}
+
+// implements a hit
+pt.fn.implementHit = function(numBases) {
+	// move players forward according to the number of bases hit
+	// TODO: allow this to be entered by the user (i.e. take two bases on a single)
+	for (base = THIRD_BASE; base >= FIRST_BASE; base--) {
+		if (pt.bases[base].player) {
+			if (base + numBases >= HOME_BASE) {
+				pt.fn.incrementRun(pt.bases[base].player);
+				pt.bases[base].player = null;
+			} else {
+				pt.bases[base + numBases].player = pt.bases[base].player;
+				pt.bases[base].player = null;
+			}
+		}
+	}
+
+	// if HR score the hitter, otherwise place on base (one offset adjustment)
+	if (numBases === HOME_RUN) {
+		pt.fn.incrementRun(pt.currentPa.hitter);
+	} else {
+		pt.bases[numBases - 1].player = pt.currentPa.hitter;
+	}
+}
+
+// implements a walk or a hit by pitch
+pt.fn.implementWalk = function() {
+	if (pt.bases[FIRST_BASE].player) {
+		if (pt.bases[SECOND_BASE].player) {
+			if (pt.bases[THIRD_BASE].player) {
+				pt.fn.incrementRun(pt.bases[THIRD_BASE].player)
+			}
+			pt.bases[THIRD_BASE].player = pt.bases[SECOND_BASE].player;
+		}
+		pt.bases[SECOND_BASE].player = pt.bases[FIRST_BASE].player;
+	}
+	pt.bases[FIRST_BASE].player = pt.currentPa.hitter;
+}
+
+// score a run
+pt.fn.incrementRun = function(player) {
+	// bool math means top -> 0, !top -> 1 as desired
+	pt.innings[pt.currInning.num - 1][!pt.currInning.top * 1]++;
 }
