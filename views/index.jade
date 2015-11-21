@@ -1,0 +1,182 @@
+extends layout
+
+block content
+
+  // CONTAINER
+  .container
+
+    // TITLE
+    h1#title= title
+
+    // INFO BAR
+    .row#infoBar
+      // BOX SCORE
+      .col-md-4.col-sm-10
+        table.table.boxscore#boxscore
+          thead
+            tr
+              td Team
+              td 1
+              td 2
+              td 3
+              td 4
+              td 5
+              td 6
+              td 7
+              td 8
+              td 9
+              td R
+              td H
+              td E
+          tbody
+            tr#boxScoreAway
+              td Away
+              td.active
+              td
+              td
+              td
+              td
+              td
+              td
+              td
+              td
+              td 0
+              td 0
+              td 0
+            tr#boxScoreHome
+              td Home
+              td
+              td
+              td
+              td
+              td
+              td
+              td
+              td
+              td
+              td 0
+              td 0
+              td 0
+
+      // BASES
+      .col-md-1.col-sm-2
+        #basesParent
+
+      // CURRENT PLAYERS
+      .col-md-3.col-sm-5#Players
+        table.table
+          tbody
+            tr
+              td Pitcher:
+              td.player#pitcher
+            tr
+              td Hitter:
+              td.player#hitter
+
+      // CURRENT STATE
+      .col-md-4.col-sm-7#state
+        table.table#stateTable
+          thead
+            tr
+              td Balls
+              td Strikes
+              td Outs
+          tbody
+            tr
+              td#balls 0
+              td#strikes 0
+              td#outs 0
+
+    // /INFO BAR
+
+    // ERROR
+    .row
+      #message.message
+      
+    // /ERROR
+
+    // CONTENT
+    .row
+
+      // ZONE
+      .col-lg-4.col-md-8.col-xs-12
+        #zoneParent
+
+      // /ZONE
+
+      // BUTTONS
+      .col-lg-3.col-md-4.col-xs.4
+
+        // INPUTS
+        #pitchInput.ptInputDisabled
+          label(for='pitchTypeInput') Pitch Type Selector
+          select#pitchTypeInput.form-control
+            option(value='0') --- Select Pitch ---
+            option(value='1') Fastball (4-seam)
+            option(value='2') Fastball (2-seam)
+            option(value='3') Sinker
+            option(value='4') Changeup
+            option(value='5') Curveball
+            option(value='6') Slider
+          br
+          label(for='pitchVelocityInput') Pitch Velocity
+          input#pitchVelocityInput.form-control(type='number', min='0', step='1', placeholder='Velocity')
+          br
+          label(for='pitchResultInput') Pitch Result Selector
+          select#pitchResultInput.form-control
+            option(value='0') --- Select Result ---
+            option(value='1') Ball
+            option(value='2') Swinging Strike
+            option(value='3') Called Strike
+            option(value='4') Foul
+            option(value='5') Foul Tip
+            option(value='6') In Play
+          br
+          button#submitPitch.btn.btn-default(type='submit') Submit Pitch
+
+        #playerInput.ptInputActive
+          label(for='pitcherNameInput') Pitcher Name
+          input#pitcherNameInput.form-control(type='text', placeholder='Pitcher name')
+          br
+          label(for='hitterNameInput') Hitter Name
+          input#hitterNameInput.form-control(text='type', placeholder='Hitter name')
+          br
+          button#submitPlayers.btn.btn-default(type='submit') Submit Players
+
+        #resultInput.ptInputDisabled
+          label(for='paResultInput') Plate Appearance Result Selector
+          select#paResultInput.form-control
+            option(value='0') --- Select Result ---
+            option(value='1') Single
+            option(value='2') Double
+            option(value='3') Triple
+            option(value='4') Home Run
+            option(value='5') In-Play Out(s)
+            option(value='6') Error
+          br
+          button#submitResult.btn.btn-default(type='submit') Submit Result
+
+        // /INPUTS
+
+      // /BUTTONS
+
+      // RECENT DATA
+      .col-lg-5.col-md-12.col-xs-8.pitchdata
+
+        table#pitchesTable.table.table-bordered
+          caption
+            h3 Current Plate Appearance
+            #captionNames
+          thead
+            tr
+              th Num
+              th Velocity
+              th Pitch Type
+              th Pitch Result
+          tbody
+
+      // /RECENT DATA
+
+    // /CONTENT
+
+  // /CONTAINER

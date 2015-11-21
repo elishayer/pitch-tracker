@@ -1,0 +1,22 @@
+doctype html
+html
+  head
+    title= title
+
+    // Stylesheets
+    link(rel='stylesheet', href='/stylesheets/bootstrap.min.css')
+    link(rel='stylesheet', href='/stylesheets/pitch-tracker.css')
+
+  body
+    block content
+
+    // Libraries
+    script(src='/javascripts/libraries/jquery-1.11.0.js')
+    script(src='/javascripts/libraries/bootstrap.min.js')
+    script(src='/javascripts/libraries/raphael.js')
+
+    // Pitch Tracker Scripts
+    script(src='/javascripts/pitch-tracker.js')
+    script(src='/javascripts/constants.js')
+    script(src='/javascripts/view.js')
+    script(src='/javascripts/controller.js')

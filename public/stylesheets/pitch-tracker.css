@@ -1,0 +1,65 @@
+body {
+    font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+div.message {
+    margin: auto;
+    text-align: center;
+    font-size: x-large;
+}
+
+th {
+    background-color: #eeeeee;
+}
+
+#title {
+	text-align: center;
+	padding-bottom: 15px;
+	text-decoration: underline;
+}
+
+/* ----- Pitch Tracker Input Wrappers ----- */
+
+/* Active */
+.ptInputActive {
+	display: block;
+}
+
+/* Disabled and hidden */
+.ptInputDisabled {
+	display: none;
+}
+
+
+/* ----- Pitch Tracker Info Bar ----- */
+#infoBar {
+	border-bottom-color: #000000;
+	border-bottom-style: solid;
+	border-bottom-width: 2px;
+	padding-bottom: 10px;
+	margin-bottom: 10px;
+}
+
+#infoBar>div>table {
+	margin-bottom: 0px;
+}
+
+.boxscore {
+	margin-bottom: 0px;
+}
+
+.boxscore>tbody>tr>td, .boxscore>thead>tr>td {
+	padding-top: 2px;
+	padding-bottom: 2px;
+	color: #000000;
+}
+
+.boxscore>tbody>tr>td.active {
+	background-color: #ff0000;
+	opacity: 0.25;
+	font-weight: bold;
+}
+
+.player {
+	font-weight: bold;
+}
