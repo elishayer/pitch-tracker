@@ -11,8 +11,7 @@ $(document).ready(function() {
 
 	// click on the zone paper
 	$('#' + ZONE_ID).click(function(event) {
-		var location = pt.fn.getPitchLocation(event.clientX, event.clientY);
-		pt.fn.setProspectivePitch(location);
+		pt.fn.setProspectivePitch(pt.fn.getPitchLocation(event.clientX, event.clientY));
 	});
 
 	// event listener for submitting the player input group
@@ -31,24 +30,21 @@ $(document).ready(function() {
 	// set the visible input group and disables all other input groups
 	// inital visible input group is the player input group
 	pt.fn.setInputGroup(pt.currentInputGroup);
-
-	// initialize the game
-	//pt.fn.initializeGame();
 });
 
 // EVENT LISTENERS ----------------------------------------------------
 
 // attaches event listeners to each member of the input group
-pt.fn.attachInputGroupEventListeners = function(inputGroupIndex, callback) {
+pt.fn.attachInputGroupEventListeners = function(inputGroupIndex, listener) {
 	var inputGroup = INPUT_GROUPS[inputGroupIndex];
 	$.each(inputGroup.inputs, function(index, input) {
-		$(input).keydown(function(event) {
-			if (event.keycode === ENTER_KEYCODE) {
-				callback();
+		$(input).keypress(function(event) {
+			if (event.keyCode === ENTER_KEYCODE) {
+				listener();
 			}
 		})
 	});
-	$(inputGroup.button).click(callback);
+	$(inputGroup.button).click(listener);
 }
 
 // event listener for submitting the players
@@ -119,6 +115,9 @@ pt.fn.submitPitch = function() {
 
 				// reset the message
 				pt.fn.clearMessage();
+
+				// set the input group again to the pitch input (clears contents)
+				pt.fn.setInputGroup(PITCH_INPUT_GROUP);
 			});
 		} else {
 			pt.fn.setError('You must enter the pitch type, velocity, and result', 'Error: ');
