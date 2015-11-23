@@ -180,17 +180,22 @@ pt.fn.setInputGroup = function(activeGroupIndex) {
 
         // set the child inputs and the button of inactive groups to disabled
         $.each(inputGroup.inputs, function(index, input) {
+            // cache jQuery object and set to disabled
+            $input = $(input);
             $(input).prop('disabled', !active);
+
+            // clear the previous contents of the input
+            if ($input[0].localName === 'input') {
+                $input.val('');
+            } else if ($input[0].localName === "select") {
+                $input.val('0');
+            }
         });
         $(inputGroup.button).prop('disabled', !active);
     });
-}
 
-// clears the inputs related to the specified-by-index input group
-pt.fn.clearInputGroup = function(index) {
-    $.each(INPUT_GROUPS[index].inputs, function(i, input) {
-        $(input).val('');
-    });
+    // set the focus on the first input of the active group
+    $(INPUT_GROUPS[activeGroupIndex].inputs[0]).focus();
 }
 
 // helper function to clear the contents of the current input group
