@@ -6,26 +6,9 @@ angular.module('ptApp', [])
 		$scope.curr = {
 			hitter  : '',
 			pitcher : '',
-			inning  : {
-				num      : 1,
-				top      : true,
-				outs     : 0,
-				pas      : []
-			},
-			pa      : {
-				hitter   : '',
-				pitcher  : '',
-				balls    : 0,
-				strikes  : 0,
-				pitches  : [],
-				result   : '0'
-			},
-			pitch   : {
-				location : [-Infinity, -Infinity],
-				type     : '0',
-				velocity : '',
-				result   : '0'
-			}
+			inning  : { uninitialized: true },
+			pa      : {},
+			pitch   : {}
 		};
 		$scope.view = PLAYER_INPUT_GROUP;
 
@@ -53,23 +36,24 @@ angular.module('ptApp', [])
 		// helper for whether the pitch data is complete
 		$scope.isPitchDataComplete = function() {
 			// TODO: get the location
-			return parseInt($scope.curr.pitch.type) && parseInt($scope.curr.pitch.velocity) > 0 &&
+			return parseInt($scope.curr.pitch.type) &&
+				parseInt($scope.curr.pitch.velocity) > 0 &&
 				parseInt($scope.curr.pitch.result);
 		}
 
 		// listener for submitting a pitch
 		$scope.pitchListener = function() {
 			if ($scope.isPitchDataComplete()) {
-				// get the pitch data from the inputs and clear the inputs
-				// ensure that all numerical data is typed correctly
+				// get the pitch data from the inputs, ensuring correct typing
 				var pitch = {
 					location : $scope.curr.pitch.location,
 					type     : parseInt($scope.curr.pitch.type),
 					velocity : $scope.curr.pitch.velocity,
 					result   : parseInt($scope.curr.pitch.result)
 				};
-				$scope.curr.pitch.type = $scope.curr.pitch.result = '0';
-				$scope.curr.pitch.velocity = '';
+
+				// intialize a new pitch
+				$scope.initializePitch();
 
 				// push the pitch into the pa pitch array
 				$scope.curr.pa.pitches.push(pitch);
@@ -111,7 +95,7 @@ angular.module('ptApp', [])
 		$scope.resultListener = function() {
 			if ($scope.isResultDataComplete()) {
 				// submit the result from the input and then clear the input
-				$scope.submitPaResult($scope.curr.pa.result);
+				$scope.submitPaResult(parseInt($scope.curr.pa.result));
 				$scope.curr.pa.result = '0';
 			} else {
 				$scope.error = true;
@@ -130,6 +114,9 @@ angular.module('ptApp', [])
 				result  : result
 			};
 
+			// initialize a new plate appearance
+			$scope.initializePa();
+
 			// TODO: submit the Pa result to mongo db
 
 			// push the pa into the inning pa array
@@ -144,22 +131,41 @@ angular.module('ptApp', [])
 
 			// create an inning if needed
 			if ($scope.curr.inning.outs === 3) {
-				// TODO: create a new inning
+				$scope.initializeInning();
 			}
-
-			// initialize a new plate appearance
-			$scope.initializePa();
 
 			// reset the view to the player selector
 			$scope.view = PLAYER_INPUT_GROUP;
 		}
 
-		// initialize a new empty pa object
+		// initialize the current inning
+		$scope.initializeInning = function() {
+			// if the inning has not yet been initialized, set to top of the 1st
+			if ($scope.curr.inning.uninitialized) {
+				$scope.curr.inning.num = 1;
+				$scope.curr.inning.top = true;
+				$scope.curr.inning.uninitialized = false;
+			} else {
+				// move forward one half inning
+				$scope.curr.inning.top = !$scope.curr.inning.top;
+				$scope.curr.inning.num += 1 * $scope.curr.inning.top;
+			}
+			$scope.curr.inning.outs = 0;
+			$scope.curr.inning.pas = [];
+		}
+
+		// initialize a new empty curr pa object
 		$scope.initializePa = function() {
-			// reset the pa data
 			$scope.curr.pa.hitter = $scope.curr.pa.pitcher = '';
 			$scope.curr.pa.balls = $scope.curr.pa.strikes = 0;
 			$scope.curr.pa.pitches = [];
+			$scope.curr.pa.result = '0';
+		}
+
+		// initialize a new empty curr pitch object
+		$scope.initializePitch = function() {
+			$scope.curr.pitch.type = $scope.curr.pitch.result = '0';
+			$scope.curr.pitch.velocity = '';
 		}
 
 		// generate the message based on the input view and error
@@ -202,4 +208,8 @@ angular.module('ptApp', [])
 		$scope.paResultToString = function(result) {
 			return PA_RESULT_MAP[result];
 		}
+		// initialize the inning, pa, and pitch objects
+		$scope.initializeInning();
+		$scope.initializePa();
+		$scope.initializePitch();
 	});
