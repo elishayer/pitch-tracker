@@ -78,15 +78,32 @@ drawZonePaper = function() {
         stroke         : PITCH_STROKE_COLOR,
         "stroke-width" : PITCH_STROKE_WIDTH
     });
+
+    // TODO: visualize the individual pitches
+    // draw a corresponding circle for each pitch of the current plate appearance
+/*    var g = $('<g>').attr('ng-repeat', "pitch in curr.pa.pitches").append($('<circle>').attr({
+        cx             : 100, // TODO: transform
+        cy             : 200,   // TODO: transform
+        r              : PITCH_RADIUS,
+        fill           : "white",            // TODO: transform
+        stroke         : PITCH_STROKE_COLOR,
+        "stroke-width" : PITCH_STROKE_WIDTH
+    }));
+    console.log(g);
+    $canvas.append(g);
+*/
 }
 
 // draws a diamond based on the center and "radius" using a svg-style path
-drawDiamond = function(paper, centerX, centerY, width, fill) {
-    return paper.path("M" + (centerX - width) + "," + centerY + "l" + width + "," + (-width) + "l" + width + "," + width + "l" + (-width) + "," + width + "Z").attr({
-        fill: fill,
-        stroke: "black",
-        "stroke-width": BASE_STROKE_WIDTH
+drawDiamond = function(paper, centerX, centerY, width, fill, index) {
+    var diamond = paper.path("M" + (centerX - width) + "," + centerY + "l" + width + "," + (-width) + "l" + width + "," + width + "l" + (-width) + "," + width + "Z").attr({
+        fill           : fill,
+        stroke         : "black",
+        "stroke-width" : BASE_STROKE_WIDTH,
     });
+    if (index !== undefined) {
+        $(diamond.node).attr({"ng-class" : "{ occupied : bases[" + index + "]}"});
+    }
 }
 
 // function to draw the bases paper using raphael.js
@@ -100,15 +117,15 @@ drawBasesPaper = function() {
     // draw basepath diamond
     drawDiamond(basesPaper, BASES_PAPER_SIZE / 2, BASES_PAPER_SIZE / 2, BASES_PAPER_SIZE / 2, GRASS_COLOR);
     bases[FIRST_BASE] = {
-        raphael : drawDiamond(basesPaper, BASES_PAPER_SIZE - BASE_SIZE, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_COLOR_EMPTY),
+        raphael : drawDiamond(basesPaper, BASES_PAPER_SIZE - BASE_SIZE, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_COLOR_EMPTY, 0),
         player  : null
     };
     bases[SECOND_BASE] = {
-        raphael : drawDiamond(basesPaper, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_SIZE, BASE_COLOR_EMPTY),
+        raphael : drawDiamond(basesPaper, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_SIZE, BASE_COLOR_EMPTY, 1),
         player  : null
     };
     bases[THIRD_BASE] = {
-        raphael : drawDiamond(basesPaper, BASE_SIZE, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_COLOR_EMPTY),
+        raphael : drawDiamond(basesPaper, BASE_SIZE, BASES_PAPER_SIZE / 2, BASE_SIZE, BASE_COLOR_EMPTY, 2),
         player  : null
     };
 }

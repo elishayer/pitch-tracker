@@ -57,3 +57,8 @@ th {
 .player {
 	font-weight: bold;
 }
+
+/* ----- Bases ----- */
+path.occupied {
+	fill : #ff0000;
+}

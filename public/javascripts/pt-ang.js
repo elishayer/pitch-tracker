@@ -10,6 +10,8 @@ angular.module('ptApp', [])
 			pa      : {},
 			pitch   : {}
 		};
+		$scope.innings = [];
+		$scope.bases = [null, null, null]; // null -> empty, otherwise player data
 		$scope.view = PLAYER_INPUT_GROUP;
 
 		// helper for whether the player data is complete
@@ -154,6 +156,7 @@ angular.module('ptApp', [])
 			}
 
 			// TODO: bases
+			$scope.advanceBaserunners(pa.hitter, result);
 
 			// create an inning if needed
 			if ($scope.curr.inning.outs === 3) {
@@ -162,6 +165,59 @@ angular.module('ptApp', [])
 
 			// reset the view to the player selector
 			$scope.view = PLAYER_INPUT_GROUP;
+		}
+
+		// advanecs baserunners as needed based on the plate appearance result
+		$scope.advanceBaserunners = function(hitter, result) {
+			if (result === WALK || result === HIT_BY_PITCH) {
+				$scope.implementWalk(hitter);
+			} else if (result === SINGLE || result === DOUBLE ||
+					result === TRIPLE || result === HOME_RUN) {
+				$scope.implementHit(hitter, result);
+			}
+		}
+
+		// implements a walk or a hit by pitch
+		$scope.implementWalk = function(hitter) {
+			if ($scope.bases[FIRST_BASE]) {
+				if ($scope.bases[SECOND_BASE]) {
+					if ($scope.bases[THIRD_BASE]) {
+						$scope.incrementRun($scope.bases[THIRD_BASE])
+					}
+					$scope.bases[THIRD_BASE] = $scope.bases[SECOND_BASE];
+				}
+				$scope.bases[SECOND_BASE] = $scope.bases[FIRST_BASE];
+			}
+			$scope.bases[FIRST_BASE] = hitter;
+		}
+
+		// implements a hit, currently all runners advancing the same number of bases as the hitter
+		$scope.implementHit = function(hitter, numBases) {
+			// move players forward according to the number of bases hit
+			// TODO: allow this to be entered by the user (i.e. take two bases on a single)
+			for (base = THIRD_BASE; base >= FIRST_BASE; base--) {
+				if ($scope.bases[base]) {
+					if (base + numBases >= HOME_BASE) {
+						$scope.incrementRun($scope.bases[base]);
+						$scope.bases[base] = null;
+					} else {
+						$scope.bases[base + numBases] = $scope.bases[base];
+						$scope.bases[base] = null;
+					}
+				}
+			}
+
+			// if HR score the hitter, otherwise place on base (one offset adjustment)
+			if (numBases === HOME_RUN) {
+				$scope.incrementRun(hitter);
+			} else {
+				$scope.bases[numBases - 1] = hitter;
+			}
+		}
+
+		// TODO.
+		$scope.incrementRun = function(player) {
+			console.log("Run scored by " + player);
 		}
 
 		// initialize the current inning
