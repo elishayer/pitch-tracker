@@ -208,6 +208,22 @@ angular.module('ptApp', [])
 		$scope.paResultToString = function(result) {
 			return PA_RESULT_MAP[result];
 		}
+
+		// predicate method for whether a cell is active
+		$scope.isInningActive = function(num, top) {
+			return $scope.curr.inning.num === num && $scope.curr.inning.top === top;
+		}
+
+		// generates the text for each inning
+		$scope.generateInningText = function(num, top) {
+			if (num > $scope.curr.inning.num || // TODO: convert to just > when run data is available
+				(num === $scope.curr.inning.num && $scope.curr.inning.top && !top)) {/* OR current half-inning and no runs */
+				return '';
+			} else {
+				return 0; // TODO: the runs in the inning
+			}
+		}
+
 		// initialize the inning, pa, and pitch objects
 		$scope.initializeInning();
 		$scope.initializePa();

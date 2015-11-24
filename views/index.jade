@@ -31,29 +31,29 @@ block content
           tbody
             tr#boxScoreAway
               td Away
-              td.active
-              td
-              td
-              td
-              td
-              td
-              td
-              td
-              td
+              td(ng-class="{ active: isInningActive(1, true) }") {{ generateInningText(1, true) }}
+              td(ng-class="{ active: isInningActive(2, true) }") {{ generateInningText(2, true) }}
+              td(ng-class="{ active: isInningActive(3, true) }") {{ generateInningText(3, true) }}
+              td(ng-class="{ active: isInningActive(4, true) }") {{ generateInningText(4, true) }}
+              td(ng-class="{ active: isInningActive(5, true) }") {{ generateInningText(5, true) }}
+              td(ng-class="{ active: isInningActive(6, true) }") {{ generateInningText(6, true) }}
+              td(ng-class="{ active: isInningActive(7, true) }") {{ generateInningText(7, true) }}
+              td(ng-class="{ active: isInningActive(8, true) }") {{ generateInningText(8, true) }}
+              td(ng-class="{ active: isInningActive(9, true) }") {{ generateInningText(9, true) }}
               td 0
               td 0
               td 0
             tr#boxScoreHome
               td Home
-              td
-              td
-              td
-              td
-              td
-              td
-              td
-              td
-              td
+              td(ng-class="{ active: isInningActive(1, false) }") {{ generateInningText(1, false) }}
+              td(ng-class="{ active: isInningActive(2, false) }") {{ generateInningText(2, false) }}
+              td(ng-class="{ active: isInningActive(3, false) }") {{ generateInningText(3, false) }}
+              td(ng-class="{ active: isInningActive(4, false) }") {{ generateInningText(4, false) }}
+              td(ng-class="{ active: isInningActive(5, false) }") {{ generateInningText(5, false) }}
+              td(ng-class="{ active: isInningActive(6, false) }") {{ generateInningText(6, false) }}
+              td(ng-class="{ active: isInningActive(7, false) }") {{ generateInningText(7, false) }}
+              td(ng-class="{ active: isInningActive(8, false) }") {{ generateInningText(8, false) }}
+              td(ng-class="{ active: isInningActive(9, false) }") {{ generateInningText(9, false) }}
               td 0
               td 0
               td 0
