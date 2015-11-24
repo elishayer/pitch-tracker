@@ -83,17 +83,15 @@ block content
               td Outs
           tbody
             tr
-              td#balls 0
-              td#strikes 0
-              td#outs 0
+              td#balls {{ curr.pa.balls }}
+              td#strikes {{ curr.pa.strikes }}
+              td#outs {{ curr.inning.outs }}
 
     // /INFO BAR
 
     // ERROR
     .row
-      #message.message
-      
-    // /ERROR
+      .message(ng-class="{ 'error': error, 'message': true }"){{ (error ? 'Error: ' : '') + generateMessage() }}
 
     // CONTENT
     .row
@@ -108,16 +106,16 @@ block content
       .col-lg-3.col-md-4.col-xs.4
 
         // INPUTS
-        form(ng-show="view === 0", ng-submit="submitPlayers()")
+        form(ng-show="view === 0", ng-submit="playerListener()")
           label(for='pitcherNameInput') Pitcher Name
-          input#pitcherNameInput.form-control(type='text', placeholder='Pitcher name', ng-model='curr.pa.pitcher')
+          input#pitcherNameInput.form-control(type='text', placeholder='Pitcher name', ng-model='curr.pitcher')
           br
           label(for='hitterNameInput') Hitter Name
-          input#hitterNameInput.form-control(text='type', placeholder='Hitter name', ng-model='curr.pa.hitter')
+          input#hitterNameInput.form-control(text='type', placeholder='Hitter name', ng-model='curr.hitter')
           br
-          input.btn.btn-default(type='submit', value='Submit Players')
+          input.btn.btn-default(type='submit', value='Submit Players', ng-disabled="!isPlayerDataComplete()")
 
-        form(ng-show="view === 1" ng-submit="submitPitch()")
+        form(ng-show="view === 1" ng-submit="pitchListener()")
           label(for='pitchTypeInput') Pitch Type Selector
           select#pitchTypeInput.form-control(ng-model='curr.pitch.type')
             option(value='0') --- Select Pitch ---
@@ -141,9 +139,9 @@ block content
             option(value='5') Foul Tip
             option(value='6') In Play
           br
-          input.btn.btn-default(type='submit' value='Submit Pitch')
+          input.btn.btn-default(type='submit' value='Submit Pitch', ng-disabled="!isPitchDataComplete()")
 
-        form(ng-show="view === 2", ng-submit="submitResult()")
+        form(ng-show="view === 2", ng-submit="resultListener()")
           label(for='paResultInput') Plate Appearance Result Selector
           select#paResultInput.form-control(ng-model='curr.pa.result')
             option(value='0') --- Select Result ---
@@ -154,7 +152,7 @@ block content
             option(value='5') In-Play Out(s)
             option(value='6') Error
           br
-          input.btn.btn-default(type='submit', value='Submit Result')
+          input.btn.btn-default(type='submit', value='Submit Result', ng-disabled="!isResultDataComplete()")
 
         // /INPUTS
 
@@ -163,17 +161,37 @@ block content
       // RECENT DATA
       .col-lg-5.col-md-12.col-xs-8.pitchdata
 
-        table#pitchesTable.table.table-bordered
-          caption
-            h3 Current Plate Appearance
-            #captionNames
-          thead
-            tr
-              th Num
-              th Velocity
-              th Pitch Type
-              th Pitch Result
-          tbody
+        table
+          tr
+            td
+              table.table.table-bordered
+                thead
+                  tr
+                    th Num
+                    th Velocity
+                    th Pitch Type
+                    th Pitch Result
+                tbody
+                  tr(ng-repeat="pitch in curr.pa.pitches")
+                    td {{ $index + 1 }}
+                    td {{ pitch.velocity }}
+                    td {{ pitchTypeToString(pitch.type) }}
+                    td {{ pitchResultToString(pitch.result) }}
+          tr
+            td
+              table.table.table-bordered
+                thead
+                  tr
+                    th Pitcher
+                    th Hitter
+                    th Result
+                    th Count
+                tbody
+                  tr(ng-show="curr.inning.pas.length" ng-repeat="pa in curr.inning.pas")
+                    td {{ pa.pitcher }}
+                    td {{ pa.hitter }}
+                    td {{ paResultToString(pa.result) }}
+                    td {{ pa.balls + '-' + pa.strikes }}
 
       // /RECENT DATA
 

@@ -135,8 +135,7 @@ var INPUT_GROUPS = [
 ]
 
 // message constants
-var ERROR_COLOR = 'red';
-var MESSAGE_COLOR_DEFAULT = 'black';
+var IS_ERROR = true;
 
 // enter button keycode
 var ENTER_KEYCODE = 13;
