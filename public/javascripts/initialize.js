@@ -62,6 +62,22 @@ drawZonePaper = function() {
     drawZoneLine(zonePaper, 0, 5, 1, 4, ZONE_COLOR, ZONE_LINE_WIDTH / 3); // diagonal bottom left
     drawZoneLine(zonePaper, 5, 0, 4, 1, ZONE_COLOR, ZONE_LINE_WIDTH / 3); // diagonal top right
     drawZoneLine(zonePaper, 5, 5, 4, 4, ZONE_COLOR, ZONE_LINE_WIDTH / 3); // diagonal bottom right
+
+    // cache the canvas object
+    var $canvas = $(zonePaper.canvas)
+
+    // record the location of zone clicks
+    $canvas.attr('ng-click', "zoneClickListener($event)");
+    
+    // draw the prospective pitch, if one exists
+    zonePaper.circle(200, 200, PITCH_RADIUS).attr({
+        "ng-show"      : "{{ curr.pitch.location.horizontal > 0 && curr.pitch.location.vertical > 0 }}",
+        cx             : "{{ getPitchX() }}",
+        cy             : "{{ getPitchY() }}",
+        fill           : PROSPECTIVE_COLOR,
+        stroke         : PITCH_STROKE_COLOR,
+        "stroke-width" : PITCH_STROKE_WIDTH
+    });
 }
 
 // draws a diamond based on the center and "radius" using a svg-style path

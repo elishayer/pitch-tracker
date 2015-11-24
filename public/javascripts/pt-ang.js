@@ -33,12 +33,38 @@ angular.module('ptApp', [])
 			}
 		}
 
+		// listener for clicks on the zone, converts the event to a pitch location
+		// in the range [0, 1] for both horizontal and vertical components such that
+		// (x, y) is a pitch with horizontal component x and vertical component y.
+		// (0, 0) is the top left corner and (1, 1) is the bottom right corner, with
+		// left-right defined from the catcher perspective.
+		$scope.zoneClickListener = function(event) {
+			var boundRect = document.getElementById(ZONE_ID).getBoundingClientRect();
+			$scope.curr.pitch.location.horizontal =
+				(event.clientX - boundRect.left) / (boundRect.right - boundRect.left);
+			$scope.curr.pitch.location.vertical =
+				(event.clientY - boundRect.top) / (boundRect.bottom - boundRect.top);
+		}
+
+		// get x and y pixel locations based on a pitch location
+		$scope.getPitchX = function() {
+			var boundRect = document.getElementById(ZONE_ID).getBoundingClientRect();
+			return $scope.curr.pitch.location.horizontal * (boundRect.right - boundRect.left);
+		}
+		$scope.getPitchY = function() {
+			var boundRect = document.getElementById(ZONE_ID).getBoundingClientRect();
+			return $scope.curr.pitch.location.vertical * (boundRect.bottom - boundRect.top);
+		}
+
 		// helper for whether the pitch data is complete
 		$scope.isPitchDataComplete = function() {
-			// TODO: get the location
 			return parseInt($scope.curr.pitch.type) &&
 				parseInt($scope.curr.pitch.velocity) > 0 &&
-				parseInt($scope.curr.pitch.result);
+				parseInt($scope.curr.pitch.result) &&
+				$scope.curr.pitch.location.horizontal >= 0 &&
+				$scope.curr.pitch.location.horizontal <= 1 &&
+				$scope.curr.pitch.location.vertical >= 0 &&
+				$scope.curr.pitch.location.vertical <= 1;
 		}
 
 		// listener for submitting a pitch
@@ -166,6 +192,10 @@ angular.module('ptApp', [])
 		$scope.initializePitch = function() {
 			$scope.curr.pitch.type = $scope.curr.pitch.result = '0';
 			$scope.curr.pitch.velocity = '';
+			$scope.curr.pitch.location = {
+				horizontal : -1,
+				vertical   : -1
+			};
 		}
 
 		// generate the message based on the input view and error
