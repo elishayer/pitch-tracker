@@ -11,7 +11,7 @@ block content
     // INFO BAR
     .row#infoBar
       // BOX SCORE
-      .col-md-4.col-sm-10
+      .col-md-4.col-xs-10
         table.table.boxscore#boxscore
           thead
             tr
@@ -59,11 +59,25 @@ block content
               td(ng-bind="gameTotals(false, 'errors')")
 
       // BASES
-      .col-md-1.col-sm-2
+      .col-md-1.col-xs-2
         #basesParent
 
+      // BASES TABLE
+      .col-md-2.col-xs-4#state
+        table.table
+          thead
+            tr
+              td First
+              td Second
+              td Third
+          tbody
+            tr
+              td(ng-bind="bases[0]")
+              td(ng-bind="bases[1]")
+              td(ng-bind="bases[2]")
+
       // CURRENT PLAYERS
-      .col-md-3.col-sm-5#Players
+      .col-md-3.col-xs-4#Players
         table.table
           tbody
             tr
@@ -74,7 +88,7 @@ block content
               td.player#hitter(ng-bind="curr.pa.hitter")
 
       // CURRENT STATE
-      .col-md-4.col-sm-7#state
+      .col-md-2.col-xs-4#state
         table.table#stateTable
           thead
             tr
@@ -97,13 +111,13 @@ block content
     .row
 
       // ZONE
-      .col-lg-4.col-md-8.col-xs-12
+      .col-md-4.col-xs-12
         #zoneParent
 
       // /ZONE
 
       // BUTTONS
-      .col-lg-3.col-md-4.col-xs.4
+      .col-md-3.col-xs.4
 
         // INPUTS
         form(ng-show="view === 0", ng-submit="playerListener()")
@@ -159,7 +173,7 @@ block content
       // /BUTTONS
 
       // RECENT DATA
-      .col-lg-5.col-md-12.col-xs-8.pitchdata
+      .col-md-5.col-xs-8.pitchdata
 
         table
           tr
