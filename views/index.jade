@@ -198,3 +198,18 @@ block content
     // /CONTENT
 
   // /CONTAINER
+
+  // MODAL
+  #modal.modal.fade
+    .modal-dialog
+      .modal-content
+        .modal-header
+          h3#modal-title
+        .modal-body
+          p#modal-body
+        .modal-footer
+          button(type="button", class="btn btn-success", value="4", ng-disabled="{{ isModalButtonDisabled(4) }}") Home Base
+          button(type="button", class="btn btn-primary", value="3", ng-disabled="{{ isModalButtonDisabled(3) }}") Third Base
+          button(type="button", class="btn btn-primary", value="2", ng-disabled="{{ isModalButtonDisabled(2) }}") Second Base
+          button(type="button", class="btn btn-primary", value="1", ng-disabled="{{ isModalButtonDisabled(1) }}") First Base
+          button(type="button", class="btn btn-danger",  value="0", ng-disabled="{{ isModalButtonDisabled(0) }}") Basepath Out
