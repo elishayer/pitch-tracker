@@ -31,32 +31,32 @@ block content
           tbody
             tr#boxScoreAway
               td Away
-              td(ng-class="{ active: isInningActive(1, true) }") {{ generateInningText(1, true) }}
-              td(ng-class="{ active: isInningActive(2, true) }") {{ generateInningText(2, true) }}
-              td(ng-class="{ active: isInningActive(3, true) }") {{ generateInningText(3, true) }}
-              td(ng-class="{ active: isInningActive(4, true) }") {{ generateInningText(4, true) }}
-              td(ng-class="{ active: isInningActive(5, true) }") {{ generateInningText(5, true) }}
-              td(ng-class="{ active: isInningActive(6, true) }") {{ generateInningText(6, true) }}
-              td(ng-class="{ active: isInningActive(7, true) }") {{ generateInningText(7, true) }}
-              td(ng-class="{ active: isInningActive(8, true) }") {{ generateInningText(8, true) }}
-              td(ng-class="{ active: isInningActive(9, true) }") {{ generateInningText(9, true) }}
-              td 0
-              td 0
-              td 0
+              td(ng-class="{ active: isInningActive(1, true) }", ng-bind="generateInningText(1, true)")
+              td(ng-class="{ active: isInningActive(2, true) }", ng-bind="generateInningText(2, true)")
+              td(ng-class="{ active: isInningActive(3, true) }", ng-bind="generateInningText(3, true)")
+              td(ng-class="{ active: isInningActive(4, true) }", ng-bind="generateInningText(4, true)")
+              td(ng-class="{ active: isInningActive(5, true) }", ng-bind="generateInningText(5, true)")
+              td(ng-class="{ active: isInningActive(6, true) }", ng-bind="generateInningText(6, true)")
+              td(ng-class="{ active: isInningActive(7, true) }", ng-bind="generateInningText(7, true)")
+              td(ng-class="{ active: isInningActive(8, true) }", ng-bind="generateInningText(8, true)")
+              td(ng-class="{ active: isInningActive(9, true) }", ng-bind="generateInningText(9, true)")
+              td(ng-bind="gameTotals(true, 'runs')")
+              td(ng-bind="gameTotals(true, 'hits')")
+              td(ng-bind="gameTotals(true, 'errors')")
             tr#boxScoreHome
               td Home
-              td(ng-class="{ active: isInningActive(1, false) }") {{ generateInningText(1, false) }}
-              td(ng-class="{ active: isInningActive(2, false) }") {{ generateInningText(2, false) }}
-              td(ng-class="{ active: isInningActive(3, false) }") {{ generateInningText(3, false) }}
-              td(ng-class="{ active: isInningActive(4, false) }") {{ generateInningText(4, false) }}
-              td(ng-class="{ active: isInningActive(5, false) }") {{ generateInningText(5, false) }}
-              td(ng-class="{ active: isInningActive(6, false) }") {{ generateInningText(6, false) }}
-              td(ng-class="{ active: isInningActive(7, false) }") {{ generateInningText(7, false) }}
-              td(ng-class="{ active: isInningActive(8, false) }") {{ generateInningText(8, false) }}
-              td(ng-class="{ active: isInningActive(9, false) }") {{ generateInningText(9, false) }}
-              td 0
-              td 0
-              td 0
+              td(ng-class="{ active: isInningActive(1, false) }", ng-bind="generateInningText(1, false)")
+              td(ng-class="{ active: isInningActive(2, false) }", ng-bind="generateInningText(2, false)")
+              td(ng-class="{ active: isInningActive(3, false) }", ng-bind="generateInningText(3, false)")
+              td(ng-class="{ active: isInningActive(4, false) }", ng-bind="generateInningText(4, false)")
+              td(ng-class="{ active: isInningActive(5, false) }", ng-bind="generateInningText(5, false)")
+              td(ng-class="{ active: isInningActive(6, false) }", ng-bind="generateInningText(6, false)")
+              td(ng-class="{ active: isInningActive(7, false) }", ng-bind="generateInningText(7, false)")
+              td(ng-class="{ active: isInningActive(8, false) }", ng-bind="generateInningText(8, false)")
+              td(ng-class="{ active: isInningActive(9, false) }", ng-bind="generateInningText(9, false)")
+              td(ng-bind="gameTotals(false, 'runs')")
+              td(ng-bind="gameTotals(false, 'hits')")
+              td(ng-bind="gameTotals(false, 'errors')")
 
       // BASES
       .col-md-1.col-sm-2
@@ -68,10 +68,10 @@ block content
           tbody
             tr
               td Pitcher:
-              td.player#pitcher {{ curr.pa.pitcher }}
+              td.player#pitcher(ng-bind="curr.pa.pitcher")
             tr
               td Hitter:
-              td.player#hitter {{ curr.pa.hitter }}
+              td.player#hitter(ng-bind="curr.pa.hitter")
 
       // CURRENT STATE
       .col-md-4.col-sm-7#state
@@ -83,15 +83,15 @@ block content
               td Outs
           tbody
             tr
-              td#balls {{ curr.pa.balls }}
-              td#strikes {{ curr.pa.strikes }}
-              td#outs {{ curr.inning.outs }}
+              td#balls(ng-bind="curr.pa.balls")
+              td#strikes(ng-bind="curr.pa.strikes")
+              td#outs(ng-bind="curr.inning.outs")
 
     // /INFO BAR
 
     // ERROR
     .row
-      .message(ng-class="{ 'error': error, 'message': true }"){{ (error ? 'Error: ' : '') + generateMessage() }}
+      .message(ng-class="{ 'error': error, 'message': true }", ng-bind="(error ? 'Error: ' : '') + generateMessage()")
 
     // CONTENT
     .row
@@ -173,10 +173,10 @@ block content
                     th Pitch Result
                 tbody
                   tr(ng-repeat="pitch in curr.pa.pitches")
-                    td {{ $index + 1 }}
-                    td {{ pitch.velocity }}
-                    td {{ pitchTypeToString(pitch.type) }}
-                    td {{ pitchResultToString(pitch.result) }}
+                    td(ng-bind="$index + 1")
+                    td(ng-bind="pitch.velocity")
+                    td(ng-bind="pitchTypeToString(pitch.type)")
+                    td(ng-bind="pitchResultToString(pitch.result)")
           tr
             td
               table.table.table-bordered
@@ -188,10 +188,10 @@ block content
                     th Count
                 tbody
                   tr(ng-show="curr.inning.pas.length" ng-repeat="pa in curr.inning.pas")
-                    td {{ pa.pitcher }}
-                    td {{ pa.hitter }}
-                    td {{ paResultToString(pa.result) }}
-                    td {{ pa.balls + '-' + pa.strikes }}
+                    td(ng-bind="pa.pitcher")
+                    td(ng-bind="pa.hitter")
+                    td(ng-bind="paResultToString(pa.result)")
+                    td(ng-bind="pa.balls + '-' + pa.strikes")
 
       // /RECENT DATA
 
