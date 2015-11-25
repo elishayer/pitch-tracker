@@ -91,51 +91,8 @@ var GRASS_COLOR = 'green';
 var BASE_COLOR_EMPTY = 'white';
 var BASE_COLOR_OCCUPIED = 'red';
 
-// input group classes
-var INPUT_ACTIVE = 'ptInputActive';
-var INPUT_DISABLED = 'ptInputDisabled';
-
 // input group constants
 var PLAYER_INPUT_GROUP = 0;
 var PITCH_INPUT_GROUP = 1;
 var RESULT_INPUT_GROUP = 2;
 var NUM_INPUT_GROUPS = 3;
-
-var INPUT_GROUPS = [
-	{
-		group: 'player',
-		wrapper: '#playerInput',
-		inputs: [
-			'#pitcherNameInput',
-			'#hitterNameInput',
-			'#submitPlayers'
-		],
-		button: '#submitPlayers'
-	},
-	{
-		group: 'pitch',
-		wrapper: '#pitchInput',
-		inputs: [
-			'#pitchTypeInput',
-			'#pitchVelocityInput',
-			'#pitchResultInput',
-			'#submitPitch'
-		],
-		button: '#submitPitch'
-	},
-	{
-		group: 'result',
-		wrapper: '#resultInput',
-		inputs: [
-			'#paResultInput',
-			'#submitResult'
-		],
-		button: '#submitResult'
-	}
-]
-
-// message constants
-var IS_ERROR = true;
-
-// enter button keycode
-var ENTER_KEYCODE = 13;
