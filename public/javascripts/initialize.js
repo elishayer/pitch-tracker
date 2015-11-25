@@ -64,28 +64,33 @@ drawZonePaper = function() {
     drawZoneLine(zonePaper, 5, 5, 4, 4, ZONE_COLOR, ZONE_LINE_WIDTH / 3); // diagonal bottom right
 
     // cache the canvas object
-    var $canvas = $(zonePaper.canvas)
+    var $canvas = $(zonePaper.canvas);
 
     // record the location of zone clicks
     $canvas.attr('ng-click', "zoneClickListener($event)");
     
     // draw the prospective pitch, if one exists
-    zonePaper.circle(200, 200, PITCH_RADIUS).attr({
+    var prospectivePitch = zonePaper.circle(0, 0, PITCH_RADIUS).attr({
         "ng-show"      : "{{ curr.pitch.location.horizontal > 0 && curr.pitch.location.vertical > 0 }}",
-        cx             : "{{ getPitchX() }}",
-        cy             : "{{ getPitchY() }}",
         fill           : PROSPECTIVE_COLOR,
         stroke         : PITCH_STROKE_COLOR,
         "stroke-width" : PITCH_STROKE_WIDTH
     });
 
+    // set the prospective cx and cy attributes using angular directive
+    // done separately to avoid errors from premature webkit evaluation
+    $(prospectivePitch.node).attr({
+        "ng-attr-cx"   : "{{ getPitchX() }}",
+        "ng-attr-cy"   : "{{ getPitchY() }}",
+    });
+
     // TODO: visualize the individual pitches
     // draw a corresponding circle for each pitch of the current plate appearance
 /*    var g = $('<g>').attr('ng-repeat', "pitch in curr.pa.pitches").append($('<circle>').attr({
-        cx             : 100, // TODO: transform
-        cy             : 200,   // TODO: transform
+        cx             : 100, 
+        cy             : 200,   
         r              : PITCH_RADIUS,
-        fill           : "white",            // TODO: transform
+        fill           : "white",    
         stroke         : PITCH_STROKE_COLOR,
         "stroke-width" : PITCH_STROKE_WIDTH
     }));
@@ -101,8 +106,14 @@ drawDiamond = function(paper, centerX, centerY, width, fill, index) {
         stroke         : "black",
         "stroke-width" : BASE_STROKE_WIDTH,
     });
+    // for each of first, second and third bases
     if (index !== undefined) {
-        $(diamond.node).attr({"ng-class" : "{ occupied : bases[" + index + "]}"});
+        // set the class of the base
+        // TODO: make tooltip work
+        $(diamond.node).attr({
+            "ng-class"    : "{ occupied : bases[" + index + "]}",
+            "uib-tooltip" : "{{ bases[" + index + "] }}",
+        });
     }
 }
 
@@ -135,3 +146,12 @@ drawZonePaper();
 
 // draw the paper representing the bases
 drawBasesPaper();
+
+// enable tooltip display
+$('[data-toggle=tooltip]').hover(function(){
+    // on mouseenter
+    $(this).tooltip('show');
+}, function(){
+    // on mouseleave
+    $(this).tooltip('hide');
+});

@@ -11,7 +11,6 @@ angular.module('ptApp', [])
 			pitch   : {}
 		};
 		$scope.innings = [];
-		$scope.bases = [null, null, null]; // null -> empty, otherwise player data
 		$scope.modalQueue = [];
 		$scope.view = PLAYER_INPUT_GROUP;
 
@@ -26,6 +25,9 @@ angular.module('ptApp', [])
 				// push the input to the curr.pa object
 				$scope.curr.pa.hitter = $scope.curr.hitter;
 				$scope.curr.pa.pitcher = $scope.curr.pitcher;
+
+				// clear the hitter and pitcher inputs
+				$scope.curr.hitter = $scope.curr.pitcher = '';
 
 				// TODO: create and store a mongo PA object
 
@@ -153,16 +155,11 @@ angular.module('ptApp', [])
 
 			// determine whether outs need to added
 			if (pa.result === STRIKEOUT || pa.result === IN_PLAY_OUT) {
-				$scope.curr.inning.outs++;
+				$scope.incrementOut();
 			}
 
 			// propogate base changes as needed
 			$scope.advanceBaserunners(pa.hitter, result);
-
-			// create an inning if needed
-			if ($scope.curr.inning.outs === 3) {
-				$scope.initializeInning();
-			}
 
 			// reset the view to the player selector
 			$scope.view = PLAYER_INPUT_GROUP;
@@ -170,12 +167,19 @@ angular.module('ptApp', [])
 
 		// advanecs baserunners as needed based on the plate appearance result
 		$scope.advanceBaserunners = function(hitter, result) {
-			if (result === WALK || result === HIT_BY_PITCH) {
-				$scope.implementWalk(hitter);
-			} else if (result === SINGLE || result === DOUBLE ||
-					result === TRIPLE || result === HOME_RUN ||
-					result === IN_PLAY_OUT) {
-				$scope.implementInPlay(hitter, result);
+			switch(result) {
+				case WALK:
+				case HIT_BY_PITCH:
+					$scope.implementWalk(hitter);
+					break;
+				case SINGLE:
+				case DOUBLE:
+				case TRIPLE:
+				case HOME_RUN:
+					$scope.incrementHit(hitter);
+				case IN_PLAY_OUT:
+					$scope.implementInPlay(hitter, result);
+					break;
 			}
 		}
 
@@ -196,17 +200,22 @@ angular.module('ptApp', [])
 		// implements ball in play, including asking the user for baserunner advancement
 		// uses the fact that the pa result code for a single is 1, double is 2, etc.
 		$scope.implementInPlay = function(hitter, result) {
-			// ask the user for advancement data for each occupied base
-			for (base = THIRD_BASE; base >= FIRST_BASE; base--) {
-				if ($scope.bases[base]) {
-					$scope.enqueueModal($scope.bases[base], base, false);
-				}
-			}
-
 			// if HR score the hitter, otherwise place on base
 			if (result === HOME_RUN) {
+				for (var base = FIRST_BASE; base <= THIRD_BASE; base++) {
+					if ($scope.bases[base]) {
+						$scope.incrementRun($scope.bases[base]);
+					}
+				}
 				$scope.incrementRun(hitter);
 			} else {
+				// if in play, ask the user for advancement data for each occupied base
+				for (var base = THIRD_BASE; base >= FIRST_BASE; base--) {
+					if ($scope.bases[base]) {
+						$scope.enqueueModal($scope.bases[base], base, false);
+					}
+				}
+
 				// add the hitter to the bases 
 				$scope.enqueueModal(hitter, result - 1, true, result !== IN_PLAY_OUT);
 			}
@@ -233,34 +242,12 @@ angular.module('ptApp', [])
 			$('#modal-body').text($scope.generateModalBody());
 
 			// disabled buttons as appropriate
-			$('.modal-footer > button').prop('disabled', $scope.isModalButtonDisabled);
-			// show the modal
-			$('#modal').modal('show');
-		}
-
-		// determine whether a modal button should be disabled
-		$scope.isModalButtonDisabled = function(index) {
-			// the basepath out is never disabled
-			if (index === 4) {
-				return false;
-			}
-
-			// if there are baserunning modal queries remaining
-			if ($scope.modalQueue.length) {
-				// get the minimum and maximum bases
-				var minBase = $scope.modalQueue[0].original;
-				var maxBase = HOME_BASE + 1;
-				for (var base = THIRD_BASE; base > minBase; base--) {
-					if ($scope.bases[base]) {
-						maxBase = Math.min(base, maxBase);
-					}
-				}
-				var base = HOME_BASE - index;
-				return base < minBase || base >= maxBase;
-			} else {
-				// modal buttons cannot be clicked when not open
-				return true;
-			}
+			//$('.modal-footer > button').prop('disabled', $scope.isModalButtonDisabled);
+			// show the modal and require it be closed by clicking a button
+			$('#modal').modal({
+				backdrop : 'static',
+				keyboard : false
+			});
 		}
 
 		// generate the text for the body of the modal
@@ -299,41 +286,34 @@ angular.module('ptApp', [])
 		}
 
 		// listener for buttons clicks within the modal
-		$('#modal button').click(function() {
-			// only respond if the button shouldn't be disabled
-			if ($scope.isModalButtonDisabled($(this).val())) {
-				// remove the runner from original base unless the hitter,
-				// in which case it has not already been placed yet
-				if (!$scope.modalQueue[0].isHitter) {
-					$scope.bases[$scope.modalQueue[0].original] = null;
-				}
-
-				var newBase = $(event.target).val();
-				// if the new base is not 0 (an out)
-				if (newBase) {
-					// if home base, count the run
-					if (newBase === HOME_BASE) {
-						$scope.incrementRun($scope.modalQueue[0].runner);
-					} else {
-						// if first-third base, place at that base
-						$scope.bases[newBase - 1] = $scope.modalQueue[0].runner;
-					}
-				} else {
-					// if an out, increment the number of outs
-					$scope.inning.outs++;
-
-					// if the inning is then over, initialize a new inning
-					if ($scope.inning.outs === 3) {
-						$scope.initializeInning();
-					}
-				}
-
-				// ensure that the changes in the scope are propogated to the view
-				$scope.$apply();
-
-				// hide the modal
-				$('#modal').modal('hide');
+		$('#modal button').click(function(event) {
+			var base = parseInt($(this).val());
+			// remove the runner from original base unless the hitter,
+			// in which case it has not already been placed yet
+			if (!$scope.modalQueue[0].isHitter) {
+				$scope.bases[$scope.modalQueue[0].original] = null;
 			}
+
+			// if the new base is not 0 (an out)
+			if (base) {
+				// if home base, count the run
+				if (base - 1 === HOME_BASE) {
+					$scope.incrementRun($scope.modalQueue[0].runner);
+				} else {
+					// if first, second, third base, place at that base
+					$scope.bases[base - 1] = $scope.modalQueue[0].runner;
+				}
+			} else {
+				// if an out, increment the number of outs
+				$scope.incrementOut();
+			}
+
+			// ensure that the changes in the scope are propogated to the view
+			// TODO: do this with a directive instead of jQuery
+			$scope.$apply();
+
+			// hide the modal
+			$('#modal').modal('hide');
 		});
 
 		// listener for the modal being hidden
@@ -347,12 +327,25 @@ angular.module('ptApp', [])
 			}
 		});
 
-		// TODO: record runs
+		// records a run
 		$scope.incrementRun = function(player) {
-			console.log("Run scored by " + player);
+			$scope.innings[$scope.curr.inning.num - 1][!$scope.curr.inning.top * 1].runs++;
 		}
 
-		// initialize the current inning
+		// records a run
+		$scope.incrementHit = function(player) {
+			$scope.innings[$scope.curr.inning.num - 1][!$scope.curr.inning.top * 1].hits++;
+		}
+
+		// add an out to the count, and initialize a new inning if necessary
+		$scope.incrementOut = function() {
+			$scope.curr.inning.outs++;
+			if ($scope.curr.inning.outs === 3) {
+				$scope.initializeInning();
+			}
+		}
+
+		// initialize a new half inning
 		$scope.initializeInning = function() {
 			// if the inning has not yet been initialized, set to top of the 1st
 			if ($scope.curr.inning.uninitialized) {
@@ -364,8 +357,24 @@ angular.module('ptApp', [])
 				$scope.curr.inning.top = !$scope.curr.inning.top;
 				$scope.curr.inning.num += 1 * $scope.curr.inning.top;
 			}
+			// if it is the top of a new inning add a inning to the model
+			if ($scope.curr.inning.top) {
+				$scope.innings.push([ {
+					runs   : 0,
+					hits   : 0,
+					errors : 0
+				}, {
+					runs   : 0,
+					hits   : 0,
+					errors : 0
+				}]);
+			}
+
 			$scope.curr.inning.outs = 0;
 			$scope.curr.inning.pas = [];
+
+			// reset the bases to being empty
+			$scope.bases = [null, null, null];
 
 			// empty the modalQueue
 			$scope.modalQueue = [];
@@ -437,12 +446,25 @@ angular.module('ptApp', [])
 
 		// generates the text for each inning
 		$scope.generateInningText = function(num, top) {
-			if (num > $scope.curr.inning.num || // TODO: convert to just > when run data is available
-				(num === $scope.curr.inning.num && $scope.curr.inning.top && !top)) {/* OR current half-inning and no runs */
+			// no text if the the half inning has not occured yet
+			if (num > $scope.curr.inning.num || 
+					(num === $scope.curr.inning.num && $scope.curr.inning.top && !top) ||
+					// or if the current inning does not have any runs
+					(num === $scope.curr.inning.num && top === $scope.curr.inning.top &&
+					$scope.innings[num - 1][!top * 1].runs === 0)) {
 				return '';
 			} else {
-				return 0; // TODO: the runs in the inning
+				return $scope.innings[num - 1][!top * 1].runs;
 			}
+		}
+
+		// loop across all innings to generate game totals for a general key
+		$scope.gameTotals = function(isTop, key) {
+			var sum = 0;
+			for (var i = 0; i < $scope.innings.length; i++) {
+				sum += $scope.innings[i][!isTop * 1][key];
+			}
+			return sum;
 		}
 
 		// initialize the inning, pa, and pitch objects
