@@ -23,13 +23,13 @@ zoneSvg.selectAll('rect')
         .enter()
         .append('rect')
         .attr({
-            x              : function(d) { return d.buffer },
-            y              : function(d) { return d.buffer },
-            width          : function(d) { return d.numBox * BOX_SIZE },
-            height         : function(d) { return d.numBox * BOX_SIZE },
+            x              : function(d) { return d.buffer; },
+            y              : function(d) { return d.buffer; },
+            width          : function(d) { return d.numBox * BOX_SIZE; },
+            height         : function(d) { return d.numBox * BOX_SIZE; },
             fill           : ZONE_FILL,
             stroke         : ZONE_COLOR,
-            'stroke-width' : function(d) { return ZONE_LINE_WIDTH / (d.swf ? d.swf : 1) },
+            'stroke-width' : function(d) { return ZONE_LINE_WIDTH / (d.swf ? d.swf : 1); },
         });
 
 // draw each line providing further detail to the zone
@@ -54,10 +54,10 @@ zoneSvg.selectAll('line')
         .enter()
         .append('line')
         .attr({
-            x1             : function(d) { return d.x1 * BOX_SIZE + ZONE_BUFFER },
-            y1             : function(d) { return d.y1 * BOX_SIZE + ZONE_BUFFER },
-            x2             : function(d) { return d.x2 * BOX_SIZE + ZONE_BUFFER },
-            y2             : function(d) { return d.y2 * BOX_SIZE + ZONE_BUFFER },
+            x1             : function(d) { return d.x1 * BOX_SIZE + ZONE_BUFFER; },
+            y1             : function(d) { return d.y1 * BOX_SIZE + ZONE_BUFFER; },
+            x2             : function(d) { return d.x2 * BOX_SIZE + ZONE_BUFFER; },
+            y2             : function(d) { return d.y2 * BOX_SIZE + ZONE_BUFFER; },
             stroke         : ZONE_COLOR,
             'stroke-width' : ZONE_LINE_WIDTH / LINE_SWF
         });
@@ -92,7 +92,8 @@ d3.select('#' + BASES_PARENT)
     .attr({
         width  : BASES_SVG_SIZE,
         height : BASES_SVG_SIZE
-    }) // draw each diamond
+    })
+    // draw each diamond
     .selectAll('path')
     .data([
         // grass diamond
@@ -111,11 +112,11 @@ d3.select('#' + BASES_PARENT)
     .enter()
     .append('path')
     .attr({
-        d              : function(d) { return 'M' + (d.cx - d.r) + ',' + d.cy + 'l' + d.r + ',' + (-d.r) +
-                         'l' + d.r + ',' + d.r + 'l' + (-d.r) + ',' + d.r + 'Z' },
-        fill           : function(d) { return d.fill },
-        stroke         : 'black',
-        'stroke-width' : BASE_STROKE_WIDTH,
-        'ng-class'     : function(d) { return '{ occupied : ' + d.ngClass + '}' },
+        d                 : function(d) { return 'M' + (d.cx - d.r) + ',' + d.cy + 'l' + d.r + ',' + (-d.r) +
+                            'l' + d.r + ',' + d.r + 'l' + (-d.r) + ',' + d.r + 'Z'; },
+        fill              : function(d) { return d.fill; },
+        stroke            : 'black',
+        'stroke-width'    : BASE_STROKE_WIDTH,
+        'ng-class'        : function(d) { return '{ occupied : ' + d.ngClass + '}'; },
     });
     // TODO: tooltip
