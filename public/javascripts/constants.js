@@ -67,6 +67,8 @@ var ZONE_SIZE = document.getElementById(ZONE_PARENT).clientWidth;
 var ZONE_BUFFER = ZONE_SIZE/ 100;
 var BOX_SIZE = (ZONE_SIZE - 2 * ZONE_BUFFER) / 5;
 var ZONE_LINE_WIDTH = ZONE_SIZE/ 75;
+var INNER_SWF = 2;
+var LINE_SWF = 3;
 var ZONE_FILL = 'white';
 var ZONE_COLOR = 'black';
 
@@ -80,8 +82,9 @@ var PROSPECTIVE_COLOR = 'yellow';
 var PITCH_STROKE_COLOR = 'black';
 
 // bases constants
-var BASES_PAPER_SIZE = document.getElementById('basesParent').clientWidth;
-var BASE_SIZE = BASES_PAPER_SIZE / 8;
+var BASES_PARENT = 'basesParent';
+var BASES_SVG_SIZE = document.getElementById('basesParent').clientWidth;
+var BASE_SIZE = BASES_SVG_SIZE / 8;
 var BASE_STROKE_WIDTH = 2;
 var FIRST_BASE = 0;
 var SECOND_BASE = 1;
@@ -95,4 +98,3 @@ var BASE_COLOR_OCCUPIED = 'red';
 var PLAYER_INPUT_GROUP = 0;
 var PITCH_INPUT_GROUP = 1;
 var RESULT_INPUT_GROUP = 2;
-var NUM_INPUT_GROUPS = 3;

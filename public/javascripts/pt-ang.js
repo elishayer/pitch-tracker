@@ -52,13 +52,32 @@ angular.module('ptApp', [])
 		}
 
 		// get x and y pixel locations based on a pitch location
-		$scope.getPitchX = function() {
+		$scope.getPitchX = function(pitch) {
 			var boundRect = document.getElementById(ZONE_ID).getBoundingClientRect();
-			return $scope.curr.pitch.location.horizontal * (boundRect.right - boundRect.left);
+			return pitch.location.horizontal * (boundRect.right - boundRect.left);
 		}
-		$scope.getPitchY = function() {
+		$scope.getPitchY = function(pitch) {
 			var boundRect = document.getElementById(ZONE_ID).getBoundingClientRect();
-			return $scope.curr.pitch.location.vertical * (boundRect.bottom - boundRect.top);
+			return pitch.location.vertical * (boundRect.bottom - boundRect.top);
+		}
+
+		// get the color of a pitch based on its result
+		$scope.getPitchColor = function(pitch) {
+			switch (pitch.result) {
+				case BALL:
+					return BALL_COLOR;
+				case SWINGING_STRIKE:
+				case CALLED_STRIKE:
+				case FOUL:
+				case FOUL_TIP:
+					return STRIKE_COLOR;
+				case IN_PLAY:
+					return IN_PLAY_COLOR;
+				default:
+					$scope.error = true;
+					console.error('Unexpected pitch result');
+					return "#ffffff";
+			}
 		}
 
 		// helper for whether the pitch data is complete
