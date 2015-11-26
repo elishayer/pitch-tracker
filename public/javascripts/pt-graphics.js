@@ -73,6 +73,19 @@ zoneSvg.append('circle')
             'stroke-width' : PITCH_STROKE_WIDTH
         });
 
+// draw all submitted pitches in the current plate appearance within a 'g' wrapper
+zoneSvg.append('g')
+        .attr('ng-repeat', 'pitch in curr.pa.pitches')
+        .append('circle')
+        .attr({
+            'ng-attr-cx'   : '{{ getPitchX(pitch) }}', // ng-attr-cx to avoid error
+            'ng-attr-cy'   : '{{ getPitchY(pitch) }}', // ng-attr-cy to avoid error
+            r              : PITCH_RADIUS,
+            fill           : '{{ getPitchColor(pitch) }}',
+            stroke         : PITCH_STROKE_COLOR,
+            'stroke-width' : PITCH_STROKE_WIDTH
+        });
+
 // create an svg for the bases
 d3.select('#' + BASES_PARENT)
     .append('svg')
