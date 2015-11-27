@@ -16,44 +16,21 @@ block content
           thead
             tr
               td Team
-              td 1
-              td 2
-              td 3
-              td 4
-              td 5
-              td 6
-              td 7
-              td 8
-              td 9
+              td(ng-repeat="n in getInningNums()", ng-bind="n")
               td R
               td H
               td E
           tbody
             tr#boxScoreAway
               td Away
-              td(ng-class="{ active: isInningActive(1, true) }", ng-bind="generateInningText(1, true)")
-              td(ng-class="{ active: isInningActive(2, true) }", ng-bind="generateInningText(2, true)")
-              td(ng-class="{ active: isInningActive(3, true) }", ng-bind="generateInningText(3, true)")
-              td(ng-class="{ active: isInningActive(4, true) }", ng-bind="generateInningText(4, true)")
-              td(ng-class="{ active: isInningActive(5, true) }", ng-bind="generateInningText(5, true)")
-              td(ng-class="{ active: isInningActive(6, true) }", ng-bind="generateInningText(6, true)")
-              td(ng-class="{ active: isInningActive(7, true) }", ng-bind="generateInningText(7, true)")
-              td(ng-class="{ active: isInningActive(8, true) }", ng-bind="generateInningText(8, true)")
-              td(ng-class="{ active: isInningActive(9, true) }", ng-bind="generateInningText(9, true)")
+              td(ng-repeat)
+              td(ng-repeat="n in getInningNums()", ng-class="{ active : isInningActive(n,true) }", ng-bind="generateInningText(n, true)")
               td(ng-bind="gameTotals(true, 'runs')")
               td(ng-bind="gameTotals(true, 'hits')")
               td(ng-bind="gameTotals(true, 'errors')")
             tr#boxScoreHome
               td Home
-              td(ng-class="{ active: isInningActive(1, false) }", ng-bind="generateInningText(1, false)")
-              td(ng-class="{ active: isInningActive(2, false) }", ng-bind="generateInningText(2, false)")
-              td(ng-class="{ active: isInningActive(3, false) }", ng-bind="generateInningText(3, false)")
-              td(ng-class="{ active: isInningActive(4, false) }", ng-bind="generateInningText(4, false)")
-              td(ng-class="{ active: isInningActive(5, false) }", ng-bind="generateInningText(5, false)")
-              td(ng-class="{ active: isInningActive(6, false) }", ng-bind="generateInningText(6, false)")
-              td(ng-class="{ active: isInningActive(7, false) }", ng-bind="generateInningText(7, false)")
-              td(ng-class="{ active: isInningActive(8, false) }", ng-bind="generateInningText(8, false)")
-              td(ng-class="{ active: isInningActive(9, false) }", ng-bind="generateInningText(9, false)")
+              td(ng-repeat="n in getInningNums()", ng-class="{ active : isInningActive(n,false) }", ng-bind="generateInningText(n, false)")
               td(ng-bind="gameTotals(false, 'runs')")
               td(ng-bind="gameTotals(false, 'hits')")
               td(ng-bind="gameTotals(false, 'errors')")

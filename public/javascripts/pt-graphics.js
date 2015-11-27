@@ -74,10 +74,9 @@ zoneSvg.append('circle')
         });
 
 // draw all submitted pitches in the current plate appearance within a 'g' wrapper
-zoneSvg.append('g')
-        .attr('ng-repeat', 'pitch in curr.pa.pitches')
-        .append('circle')
+zoneSvg.append('circle')
         .attr({
+            'ng-repeat'    : 'pitch in curr.pa.pitches', // repeat for each pitch in the pa
             'ng-attr-cx'   : '{{ getPitchX(pitch) }}', // ng-attr-cx to avoid error
             'ng-attr-cy'   : '{{ getPitchY(pitch) }}', // ng-attr-cy to avoid error
             r              : PITCH_RADIUS,

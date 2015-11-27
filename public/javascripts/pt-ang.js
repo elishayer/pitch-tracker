@@ -458,6 +458,19 @@ angular.module('ptApp', [])
 			return PA_RESULT_MAP[result];
 		}
 
+		// get an array of inning numbers to display
+		$scope.getInningNums = function() {
+			// if in extra innings, extend to that higher
+			var numInnings = Math.max(MIN_INNINGS, $scope.curr.inning.num);
+
+			// push each inning number into the array and return
+			var range = [];
+			for (var i = 1; i <= numInnings; i++) {
+				range.push(i);
+			}
+			return range;
+		}
+
 		// predicate method for whether a cell is active
 		$scope.isInningActive = function(num, top) {
 			return $scope.curr.inning.num === num && $scope.curr.inning.top === top;

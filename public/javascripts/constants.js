@@ -1,5 +1,7 @@
 // CONSTANTS ----------------------------------------------------------
 
+var MIN_INNINGS = 9;
+
 // constants to convert pitch results
 var BALL = 1;
 var SWINGING_STRIKE = 2;
