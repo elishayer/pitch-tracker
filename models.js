@@ -45,6 +45,7 @@ var PASchema = new mongoose.Schema({
 	result       : Number,
 	start        : Date,
 	end          : Date
+	// TODO: bases before and/or after the pa
 });
 
 var PA = mongoose.model('PA', PASchema);
@@ -60,7 +61,7 @@ var PitchSchema = new mongoose.Schema({
 	strikes      : Number,
 	pitchNum     : Number,
 	pa           : mongoose.Schema.Types.ObjectId,
-	date         : Date
+	time         : Date
 });
 
 var Pitch = mongoose.model('Pitch', PitchSchema);

@@ -1,5 +1,12 @@
-angular.module('ptApp', [])
-	.controller('PitchTrackerController', function($scope) {
+/* pt-ang.js
+ * Eli Shayer
+ * ----------
+ * The Angular module and controller for the pitch tracker application
+ * Uses the AngularUI Bootstrap dependency
+ */
+
+angular.module('ptApp', ['ui.bootstrap'])
+	.controller('PitchTrackerController', function($scope, $http) {
 		$scope.mode = 'game'; // TODO: multiple modes: game, bp, pitching only, etc.
 		$scope.error = false; // true if an error is to be displayed
 		$scope.message;
@@ -29,10 +36,20 @@ angular.module('ptApp', [])
 				// clear the hitter and pitcher inputs
 				$scope.curr.hitter = $scope.curr.pitcher = '';
 
-				// TODO: create and store a mongo PA object
+				// create a mongoDB object for the new pa
+				$http.post('/api/addpa', {
+					hitter  : $scope.curr.pa.hitter,
+					pitcher : $scope.curr.pa.pitcher
+				}).then(function(response) {
+					// store the mongoDB pa _id for the db object
+					$scope.curr.pa._id = response.data.pa;
 
-				// change the input view to the pitch input
-				$scope.view = PITCH_INPUT_GROUP;
+					// change the input view to the pitch input
+					$scope.view = PITCH_INPUT_GROUP;
+				}, function(response) {
+					console.log(response);
+					$scope.error = true;
+				});
 			} else {
 				$scope.error = true;
 			}
@@ -108,29 +125,45 @@ angular.module('ptApp', [])
 				// push the pitch into the pa pitch array
 				$scope.curr.pa.pitches.push(pitch);
 
-				// TODO: store pitch into mongo db
+				// store the pitch object in mongoDB
+				$http.post('/api/addpitch', {
+					pa       : $scope.curr.pa._id,
+					type     : pitch.type,
+					velocity : pitch.velocity,
+					result   : pitch.result,
+					xLoc     : pitch.location.horizontal,
+					yLoc     : pitch.location.vertical,
+					// balls and strikes before the pitch (i.e. first of pa will be 0-0)
+					balls    : $scope.curr.pa.balls,
+					strikes  : $scope.curr.pa.strikes,
+					// first pitch is 1, etc.
+					pitchNum : $scope.curr.pa.pitches.length
+				}).then(function(response) {
+					// adjust the number of balls and strikes
+					if (pitch.result === BALL) {
+						$scope.curr.pa.balls++;
+					} else if (pitch.result === CALLED_STRIKE ||
+								pitch.result === SWINGING_STRIKE ||
+								pitch.result === FOUL_TIP ||
+								(pitch.result === FOUL &&
+									$scope.curr.pa.strikes < STRIKES_PER_K - 1)) {
+						$scope.curr.pa.strikes++;
+					}
 
-				// adjust the number of balls and strikes
-				if (pitch.result === BALL) {
-					$scope.curr.pa.balls++;
-				} else if (pitch.result === CALLED_STRIKE ||
-							pitch.result === SWINGING_STRIKE ||
-							pitch.result === FOUL_TIP ||
-							(pitch.result === FOUL && $scope.curr.pa.strikes < 2)) {
-					$scope.curr.pa.strikes++;
-				}
+					// set the plate appearance result if applicable
+					if ($scope.curr.pa.strikes === STRIKES_PER_K) {
+						$scope.submitPaResult(STRIKEOUT);
+					} else if ($scope.curr.pa.balls === BALLS_PER_BB) {
+						$scope.submitPaResult(WALK);
+					}
 
-				// set the plate appearance result if applicable
-				if ($scope.curr.pa.strikes === 3) {
-					$scope.submitPaResult(STRIKEOUT);
-				} else if ($scope.curr.pa.balls === 4) {
-					$scope.submitPaResult(WALK);
-				}
-
-				// if the ball was put in play switch to the result input view
-				if (pitch.result === IN_PLAY) {
-					$scope.view = RESULT_INPUT_GROUP;
-				}
+					// if the ball was put in play switch to the result input view
+					if (pitch.result === IN_PLAY) {
+						$scope.view = RESULT_INPUT_GROUP;
+					}
+				}, function(response) {
+					$scope.error = true;
+				});
 			} else {
 				$scope.error = true;
 			}
@@ -154,34 +187,45 @@ angular.module('ptApp', [])
 
 		// finalize the plate appearance result
 		$scope.submitPaResult = function(result) {
-			// get the pa data
+			// the pa data to store in the browser
 			var pa = {
 				hitter  : $scope.curr.pa.hitter,
 				pitcher : $scope.curr.pa.pitcher,
 				balls   : $scope.curr.pa.balls,
 				strikes : $scope.curr.pa.strikes,
 				pitches : $scope.curr.pa.pitches,
-				result  : result
+				result  : result,
+				_id     : $scope.curr.pa._id
 			};
 
-			// initialize a new plate appearance
-			$scope.initializePa();
-
-			// TODO: submit the Pa result to mongo db
-
-			// push the pa into the inning pa array
-			$scope.curr.inning.pas.push(pa);
-
-			// determine whether outs need to added
-			if (pa.result === STRIKEOUT || pa.result === IN_PLAY_OUT) {
-				$scope.incrementOut();
+			// the subset of the data to send to the datqbase
+			var data = {
+				result : pa.result,
+				_id    : pa._id
 			}
 
-			// propogate base changes as needed
-			$scope.advanceBaserunners(pa.hitter, result);
+			// Submit the PA result to mongoDB
+			$http.post('/api/finalizepa', data).then(function(response) {
+				// initialize a new plate appearance
+				$scope.initializePa();
 
-			// reset the view to the player selector
-			$scope.view = PLAYER_INPUT_GROUP;
+				// push the pa into the inning pa array
+				$scope.curr.inning.pas.push(pa);
+
+				// determine whether outs need to added
+				if (pa.result === STRIKEOUT || pa.result === IN_PLAY_OUT) {
+					$scope.incrementOut();
+				}
+
+				// propogate base changes as needed
+				$scope.advanceBaserunners(pa.hitter, result);
+
+				// reset the view to the player selector
+				$scope.view = PLAYER_INPUT_GROUP;
+			}, function(response) {
+				$scope.error = true;
+			});
+
 		}
 
 		// advanecs baserunners as needed based on the plate appearance result
@@ -359,7 +403,7 @@ angular.module('ptApp', [])
 		// add an out to the count, and initialize a new inning if necessary
 		$scope.incrementOut = function() {
 			$scope.curr.inning.outs++;
-			if ($scope.curr.inning.outs === 3) {
+			if ($scope.curr.inning.outs === OUTS_PER_INNING) {
 				$scope.initializeInning();
 			}
 		}
@@ -412,7 +456,7 @@ angular.module('ptApp', [])
 			$scope.curr.pitch.type = $scope.curr.pitch.result = '0';
 			$scope.curr.pitch.velocity = '';
 			$scope.curr.pitch.location = {
-				horizontal : -1,
+				horizontal : -1, // data outside the legitimate [0, 1] range
 				vertical   : -1
 			};
 		}

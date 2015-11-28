@@ -1,5 +1,9 @@
 // CONSTANTS ----------------------------------------------------------
 
+// constants inherent to baseball rules
+var STRIKES_PER_K = 3;
+var BALLS_PER_BB = 4;
+var OUTS_PER_INNING = 3;
 var MIN_INNINGS = 9;
 
 // constants to convert pitch results
@@ -85,7 +89,7 @@ var PITCH_STROKE_COLOR = 'black';
 
 // bases constants
 var BASES_PARENT = 'basesParent';
-var BASES_SVG_SIZE = document.getElementById('basesParent').clientWidth;
+var BASES_SVG_SIZE = document.getElementById(BASES_PARENT).clientWidth;
 var BASE_SIZE = BASES_SVG_SIZE / 8;
 var BASE_STROKE_WIDTH = 2;
 var FIRST_BASE = 0;
@@ -96,7 +100,20 @@ var GRASS_COLOR = 'green';
 var BASE_COLOR_EMPTY = 'white';
 var BASE_COLOR_OCCUPIED = 'red';
 
-// input group constants
+// state constants
+var STATE_PARENT = 'stateParent';
+var STATE_SVG_WIDTH = document.getElementById(STATE_PARENT).clientWidth;
+var STATE_SVG_HEIGHT = 70;
+var STATE_RADIUS = 9;
+var STATE_X_PADDING = 8;
+var STATE_Y_PADDING = 5;
+var STATE_Y_OFFSET = 2;
+var STATE_TEXT_OFFSET = 24;
+var STATE_STROKE_WIDTH = 3;
+var STATE_STROKE = '#888888';
+var STATE_FILL = '#dddddd';
+
+// input view constants
 var PLAYER_INPUT_GROUP = 0;
 var PITCH_INPUT_GROUP = 1;
 var RESULT_INPUT_GROUP = 2;
