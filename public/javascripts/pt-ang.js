@@ -507,9 +507,16 @@ angular.module('ptApp', ['ui.bootstrap'])
 			// if in extra innings, extend to that higher
 			var numInnings = Math.max(MIN_INNINGS, $scope.curr.inning.num);
 
-			// push each inning number into the array and return
+			return $scope.getRange(numInnings);
+		}
+
+		// get a range defined by min, max, and step in an array
+		$scope.getRange = function(max, min, step) {
+			// default min and step size are both 1
+			min = min || 1;
+			step = step || 1;
 			var range = [];
-			for (var i = 1; i <= numInnings; i++) {
+			for (var i = min; i <= max; i += step) {
 				range.push(i);
 			}
 			return range;

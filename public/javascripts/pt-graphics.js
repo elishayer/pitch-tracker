@@ -135,35 +135,20 @@ var stateSvg = d3.select('#' + STATE_PARENT)
                         height : STATE_SVG_HEIGHT
                     });
 
-// draw the circles
-stateSvg.selectAll('g') // grouped by type
+// draw the circles grouped by type
+stateSvg.selectAll('g')
         .data(statesData)
         .enter()
         .append('g')
-        .selectAll('circle')
-        // create the data for the type
-        // TODO: convert to ng-repeat
-        .data(function(d, typeIndex) {
-            var array = [];
-            for (var i = 0; i < d.num; i++) {
-                array.push({
-                    x    : i,
-                    y    : typeIndex,
-                    type : d.type,
-                    data : d.data
-                });
-            }
-            return array;
-        })
-        .enter()
         .append('circle')
         .attr({
-            cx         : function(d) { return STATE_TEXT_OFFSET + STATE_RADIUS * (2 * d.x + 1) + STATE_X_PADDING * d.x; },
-            cy         : function(d) { return STATE_RADIUS * (2 * d.y + 1) + STATE_Y_PADDING * d.y; },
-            r          : STATE_RADIUS,
-            stroke     : STATE_STROKE,
-            fill       : STATE_FILL,
-            'ng-class' : function(d, i) { return '{ ' + d.type + ' : ' + d.data + ' > ' + i + ' }'; }
+            'ng-repeat'  : function(d) { return 'n in getRange(' + d.num + ')'; },
+            'ng-attr-cx' : function(d) { return '{{ ' + STATE_TEXT_OFFSET + ' + ' + STATE_RADIUS + ' * 2 * (n - 1) + ' + STATE_X_PADDING + ' * n }}'; },
+            cy           : function(d, i) { return STATE_RADIUS * (2 * i + 1) + STATE_Y_PADDING * i; },
+            r            : STATE_RADIUS,
+            stroke       : STATE_STROKE,
+            fill         : STATE_FILL,
+            'ng-class'   : function(d, i) { return '{ ' + d.type + ' : ' + d.data + ' >= n }'; }
         });
 
 // place labels by type
@@ -176,4 +161,5 @@ stateSvg.selectAll('text')
             y : function(d, i) { return STATE_RADIUS * (2 * (i + 1)) + STATE_Y_PADDING * i - STATE_Y_OFFSET; },
             class : 'state-label'
         })
+        // show only the first letter in upper case
         .text(function(d) { return d.type.substring(0, 1).toUpperCase(); });
