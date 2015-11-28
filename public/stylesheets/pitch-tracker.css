@@ -61,3 +61,20 @@ th {
 path.occupied {
 	fill : #ff0000;
 }
+
+/* ----- States ----- */
+text.state-label {
+	font-size: 20px;
+}
+
+circle.strikes {
+	fill : red;
+}
+
+circle.balls {
+	fill : green;
+}
+
+circle.outs {
+	fill : blue;
+}

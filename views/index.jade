@@ -23,7 +23,6 @@ block content
           tbody
             tr#boxScoreAway
               td Away
-              td(ng-repeat)
               td(ng-repeat="n in getInningNums()", ng-class="{ active : isInningActive(n,true) }", ng-bind="generateInningText(n, true)")
               td(ng-bind="gameTotals(true, 'runs')")
               td(ng-bind="gameTotals(true, 'hits')")
@@ -65,18 +64,8 @@ block content
               td.player#hitter(ng-bind="curr.pa.hitter")
 
       // CURRENT STATE
-      .col-md-2.col-xs-4#state
-        table.table#stateTable
-          thead
-            tr
-              td Balls
-              td Strikes
-              td Outs
-          tbody
-            tr
-              td#balls(ng-bind="curr.pa.balls")
-              td#strikes(ng-bind="curr.pa.strikes")
-              td#outs(ng-bind="curr.inning.outs")
+      .col-md-2.col-xs-4
+        #stateParent
 
     // /INFO BAR
 
