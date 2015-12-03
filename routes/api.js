@@ -102,7 +102,7 @@ router.post('/addpa', function(req, res) {
 	});
 });
 
-/* POST the result and the end time of a plate appearance */
+/* POST the result a plate appearance and set the end time */
 router.post('/finalizepa', function(req, res) {
 	// set the result and the end time of the pa
 	var update = { $set : { result : req.body.result, end : getTime() } };
@@ -111,7 +111,6 @@ router.post('/finalizepa', function(req, res) {
 		if (err) {
 			sendError(res, err);
 		} else {
-			req.models.PA.findOne({_id : req.body._id}, function(err, pa) { console.log(pa); });
 			res.status(STATUS_OK).send({ msg: '' });
 		}
 	});
