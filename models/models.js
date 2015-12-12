@@ -36,6 +36,16 @@ var TeamSchema = new mongoose.Schema({
 
 var Team = mongoose.model('Team', TeamSchema);
 */
+
+// ---------------------------------------- User
+var UserSchema = new mongoose.Schema({
+	name         : String,
+	password     : String,
+	//sessions     : [mongoose.Schema.Types.ObjectId]
+});
+
+var User = mongoose.model('User', UserSchema);
+
 // ---------------------------------------- Plate Appearance
 var PASchema = new mongoose.Schema({
 	game         : mongoose.Schema.Types.ObjectId,
@@ -69,5 +79,6 @@ var Pitch = mongoose.model('Pitch', PitchSchema);
 // ---------------------------------------- Exports
 module.exports = {
 	PA: PA,
-	Pitch: Pitch
+	Pitch: Pitch,
+	User: User
 }

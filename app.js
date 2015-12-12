@@ -1,4 +1,5 @@
 var express = require('express');
+var session = require('express-session');
 var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
@@ -18,14 +19,7 @@ mongoose.connect('mongodb://localhost:27017/pitch-tracker');
 // mongoose connection and event handlers
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', function() {
-    console.log('database connection successful');
-    models.Pitch = require('./models').Pitch;
-    models.PA = require('./models').PA;
-});
-
-var routes = require('./routes/index');
-var api = require('./routes/api');
+db.once('open', function() { console.log('database connection successful'); });
 
 var app = express();
 
@@ -40,15 +34,22 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// create a session
+app.use(session({
+    secret: 'pitch-tracker-secret',
+    resave: true,
+    saveUninitialized: false
+}));
+
 // make db and models accessible to the router
 app.use(function(req, res, next) {
     req.db = db;
-    req.models = models;
+    req.models = require('./models/models');
     next();
 });
 
-app.use('/', routes);
-app.use('/api', api);
+app.use('/', require('./routes/index'));
+app.use('/api', require('./routes/api'));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
