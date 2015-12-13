@@ -1,195 +1,270 @@
-extends layout
+doctype html
+html
+  head
+    title= title
 
-block content
+    // Stylesheets
+    link(rel='stylesheet', href='/stylesheets/bootstrap.min.css')
+    link(rel='stylesheet', href='/stylesheets/pitch-tracker.css')
 
-  // CONTAINER
-  .container(ng-controller='PitchTrackerController as ptAng')
+  body(ng-app='ptApp', ng-controller='PitchTrackerController as ptAng')
+    // Navigation bar
+    nav.navbar.navbar-default
+      .container-fluid
+        .navbar-header
+          button.navbar-toggle.collapsed(type='button', data-toggle='collapse', data-target='#pt-navbar-collapse', aria-expanded='false')
+            span.sr-only Toggle navigation
+            span.icon-bar
+            span.icon-bar
+            span.icon-bar
+          a.navbar-brand(href='#') Pitch Tracker
 
-    // TITLE
-    h1#title= title
+        .collapse.navbar-collapse#pt-navbar-collapse
+          ul.nav.navbar-nav
+            li(ng-class='{active: view === 0 || view === 1}')
+              a(href='#') Login
+            li(ng-class='{active: view === 2}')
+              a(href='#') Input
+            li 
+              a(href='#') Analysis
+            li
+              a(href='#') About
 
-    // INFO BAR
-    .row#infoBar
-      // BOX SCORE
-      .col-md-4.col-xs-10
-        table.table.boxscore#boxscore
-          thead
-            tr
-              td Team
-              td(ng-repeat="n in getInningNums()", ng-bind="n")
-              td R
-              td H
-              td E
-          tbody
-            tr#boxScoreAway
-              td Away
-              td(ng-repeat="n in getInningNums()", ng-class="{ active : isInningActive(n,true) }", ng-bind="generateInningText(n, true)")
-              td(ng-bind="gameTotals(true, 'runs')")
-              td(ng-bind="gameTotals(true, 'hits')")
-              td(ng-bind="gameTotals(true, 'errors')")
-            tr#boxScoreHome
-              td Home
-              td(ng-repeat="n in getInningNums()", ng-class="{ active : isInningActive(n,false) }", ng-bind="generateInningText(n, false)")
-              td(ng-bind="gameTotals(false, 'runs')")
-              td(ng-bind="gameTotals(false, 'hits')")
-              td(ng-bind="gameTotals(false, 'errors')")
+          ul.nav.navbar-nav.navbar-right
+            li(ng-show="user.name.length")
+              button.btn.btn-default(role='button') Welcome, {{ user.name }}
+            li(ng-hide="user.name.length")
+              button.btn.btn-primary(role='button', ng-click='accountAction(0)') Sign in
+            li(ng-hide="user.name.length")
+              button.btn.btn-success(role="button", ng-click='accountAction(1)') Create Account
 
-      // BASES
-      .col-md-1.col-xs-2
-        #basesParent
 
-      // BASES TABLE
-      .col-md-2.col-xs-4#state
-        table.table
-          thead
-            tr
-              td First
-              td Second
-              td Third
-          tbody
-            tr
-              td(ng-bind="bases[0]")
-              td(ng-bind="bases[1]")
-              td(ng-bind="bases[2]")
+    .container
+      // TITLE
+      h1#title= title
 
-      // CURRENT PLAYERS
-      .col-md-3.col-xs-4#Players
-        table.table
-          tbody
-            tr
-              td Pitcher:
-              td.player#pitcher(ng-bind="curr.pa.pitcher")
-            tr
-              td Hitter:
-              td.player#hitter(ng-bind="curr.pa.hitter")
+      #user(ng-show='view === 0')
+        .row
+          .col-xs-4.col-xs-offset-4
+            #user(ng-show='!user.name.length && accountFormType !== 0 && accountFormType !== 1')
+              p Sign in, create an account, or log as a guest
+              button.btn.btn-primary.btn-lg.btn-block(type='button', ng-click='accountAction(0)') Sign in
+              button.btn.btn-success.btn-lg.btn-block(type='button', ng-click='accountAction(1)') Create Account
+              button.btn.btn-warning.btn-lg.btn-block(type='button', ng-click='accountAction(2)') Guest User
+            #accountForm(ng-show='accountFormType === 0 || accountFormType === 1')
+              h3(ng-bind='accountFormHeader()')
+              form(ng-submit='accountFormSubmit()')
+                .form-group
+                  label(for='accountFormName') Name
+                  input.form-control#accountFormName(type='text', placeholder='Name', ng-model='accountFormName')
+                .form-group
+                  label(for="accountFormPassword") Password
+                  input.form-control#accountFormPassword(type="password", placeholder="Password", ng-model="accountFormPassword")
+                button.btn.btn-primary(type="submit" ng-disabled="!accountFormName.length || !accountFormPassword.length") Submit
+              p.error(ng-show="userLoginError" ng-bind="userLoginError")
+      #session(ng-show='view === 1')
+        .row
+          .col-xs-4.col-xs-offset-4
+            p Hi {{ user.name }}, please select the session type:
+            form(ng-submit="initiateSession()")
+              button.btn.btn-primary.btn-lg.btn-block(type="button", ng-click="setSessionType(0)") Game
+              button.btn.btn-primary.btn-lg.btn-block(type="button", ng-click="setSessionType(1)") Practice (Pitchers and Hitters)
+              button.btn.btn-primary.btn-lg.btn-block(type="button", ng-click="setSessionType(2)") Bullpen (Pitchers only)
 
-      // CURRENT STATE
-      .col-md-2.col-xs-4
-        #stateParent
+      #input(ng-show="view === 2")
+        // INFO BAR
+        .row#infoBar
+          // BOX SCORE
+          .col-md-4.col-xs-10
+            table.table.boxscore#boxscore
+              thead
+                tr
+                  td Team
+                  td(ng-repeat="n in getInningNums()", ng-bind="n")
+                  td R
+                  td H
+                  td E
+              tbody
+                tr#boxScoreAway
+                  td Away
+                  td(ng-repeat="n in getInningNums()", ng-class="{ active : isInningActive(n,true) }", ng-bind="generateInningText(n, true)")
+                  td(ng-bind="gameTotals(true, 'runs')")
+                  td(ng-bind="gameTotals(true, 'hits')")
+                  td(ng-bind="gameTotals(true, 'errors')")
+                tr#boxScoreHome
+                  td Home
+                  td(ng-repeat="n in getInningNums()", ng-class="{ active : isInningActive(n,false) }", ng-bind="generateInningText(n, false)")
+                  td(ng-bind="gameTotals(false, 'runs')")
+                  td(ng-bind="gameTotals(false, 'hits')")
+                  td(ng-bind="gameTotals(false, 'errors')")
 
-    // /INFO BAR
+          // BASES
+          .col-md-1.col-xs-2
+            #basesParent
 
-    // ERROR
-    .row
-      .message(ng-class="{ 'error': error, 'message': true }", ng-bind="(error ? 'Error: ' : '') + generateMessage()")
+          // BASES TABLE
+          .col-md-2.col-xs-4#state
+            table.table
+              thead
+                tr
+                  td First
+                  td Second
+                  td Third
+              tbody
+                tr
+                  td(ng-bind="bases[0]")
+                  td(ng-bind="bases[1]")
+                  td(ng-bind="bases[2]")
 
-    // CONTENT
-    .row
+          // CURRENT PLAYERS
+          .col-md-3.col-xs-4#Players
+            table.table
+              tbody
+                tr
+                  td Pitcher:
+                  td.player#pitcher(ng-bind="curr.pa.pitcher")
+                tr
+                  td Hitter:
+                  td.player#hitter(ng-bind="curr.pa.hitter")
 
-      // ZONE
-      .col-md-4.col-xs-12
-        #zoneParent
+          // CURRENT STATE
+          .col-md-2.col-xs-4
+            #stateParent
 
-      // /ZONE
+        // /INFO BAR
 
-      // BUTTONS
-      .col-md-3.col-xs.4
+        // ERROR
+        .row
+          .message(ng-class="{ 'error': error, 'message': true }", ng-bind="(error ? 'Error: ' : '') + generateMessage()")
 
-        // INPUTS
-        form(ng-show="view === 0", ng-submit="playerListener()")
-          label(for='pitcherNameInput') Pitcher Name
-          input#pitcherNameInput.form-control(type='text', placeholder='Pitcher name', ng-model='curr.pitcher')
-          br
-          label(for='hitterNameInput') Hitter Name
-          input#hitterNameInput.form-control(text='type', placeholder='Hitter name', ng-model='curr.hitter')
-          br
-          input.btn.btn-default(type='submit', value='Submit Players', ng-disabled="!isPlayerDataComplete()")
+        // CONTENT
+        .row
 
-        form(ng-show="view === 1" ng-submit="pitchListener()")
-          label(for='pitchTypeInput') Pitch Type Selector
-          select#pitchTypeInput.form-control(ng-model='curr.pitch.type')
-            option(value='0') --- Select Pitch ---
-            option(value='1') Fastball (4-seam)
-            option(value='2') Fastball (2-seam)
-            option(value='3') Sinker
-            option(value='4') Changeup
-            option(value='5') Curveball
-            option(value='6') Slider
-          br
-          label(for='pitchVelocityInput') Pitch Velocity
-          input#pitchVelocityInput.form-control(type='number', min='0', placeholder='Velocity', ng-model='curr.pitch.velocity')
-          br
-          label(for='pitchResultInput') Pitch Result Selector
-          select#pitchResultInput.form-control(ng-model='curr.pitch.result')
-            option(value='0') --- Select Result ---
-            option(value='1') Ball
-            option(value='2') Swinging Strike
-            option(value='3') Called Strike
-            option(value='4') Foul
-            option(value='5') Foul Tip
-            option(value='6') In Play
-          br
-          input.btn.btn-default(type='submit' value='Submit Pitch', ng-disabled="!isPitchDataComplete()")
+          // ZONE
+          .col-md-4.col-xs-12
+            #zoneParent
 
-        form(ng-show="view === 2", ng-submit="resultListener()")
-          label(for='paResultInput') Plate Appearance Result Selector
-          select#paResultInput.form-control(ng-model='curr.pa.result')
-            option(value='0') --- Select Result ---
-            option(value='1') Single
-            option(value='2') Double
-            option(value='3') Triple
-            option(value='4') Home Run
-            option(value='5') In-Play Out(s)
-            option(value='6') Error
-          br
-          input.btn.btn-default(type='submit', value='Submit Result', ng-disabled="!isResultDataComplete()")
+          // /ZONE
 
-        // /INPUTS
+          // BUTTONS
+          .col-md-3.col-xs.4
 
-      // /BUTTONS
+            // INPUTS
+            form(ng-show="ptInputView === 0", ng-submit="playerListener()")
+              label(for='pitcherNameInput') Pitcher Name
+              input#pitcherNameInput.form-control(type='text', placeholder='Pitcher name', ng-model='curr.pitcher')
+              br
+              label(for='hitterNameInput') Hitter Name
+              input#hitterNameInput.form-control(text='type', placeholder='Hitter name', ng-model='curr.hitter')
+              br
+              input.btn.btn-default(type='submit', value='Submit Players', ng-disabled="!isPlayerDataComplete()")
 
-      // RECENT DATA
-      .col-md-5.col-xs-8.pitchdata
+            form(ng-show="ptInputView === 1" ng-submit="pitchListener()")
+              label(for='pitchTypeInput') Pitch Type Selector
+              select#pitchTypeInput.form-control(ng-model='curr.pitch.type')
+                option(value='0') --- Select Pitch ---
+                option(value='1') Fastball (4-seam)
+                option(value='2') Fastball (2-seam)
+                option(value='3') Sinker
+                option(value='4') Changeup
+                option(value='5') Curveball
+                option(value='6') Slider
+              br
+              label(for='pitchVelocityInput') Pitch Velocity
+              input#pitchVelocityInput.form-control(type='number', min='0', placeholder='Velocity', ng-model='curr.pitch.velocity')
+              br
+              label(for='pitchResultInput') Pitch Result Selector
+              select#pitchResultInput.form-control(ng-model='curr.pitch.result')
+                option(value='0') --- Select Result ---
+                option(value='1') Ball
+                option(value='2') Swinging Strike
+                option(value='3') Called Strike
+                option(value='4') Foul
+                option(value='5') Foul Tip
+                option(value='6') In Play
+              br
+              input.btn.btn-default(type='submit' value='Submit Pitch', ng-disabled="!isPitchDataComplete()")
 
-        table
-          tr
-            td
-              table.table.table-bordered
-                thead
-                  tr
-                    th Num
-                    th Velocity
-                    th Pitch Type
-                    th Pitch Result
-                tbody
-                  tr(ng-repeat="pitch in curr.pa.pitches")
-                    td(ng-bind="$index + 1")
-                    td(ng-bind="pitch.velocity")
-                    td(ng-bind="pitchTypeToString(pitch.type)")
-                    td(ng-bind="pitchResultToString(pitch.result)")
-          tr
-            td
-              table.table.table-bordered
-                thead
-                  tr
-                    th Pitcher
-                    th Hitter
-                    th Result
-                    th Count
-                tbody
-                  tr(ng-show="curr.inning.pas.length" ng-repeat="pa in curr.inning.pas")
-                    td(ng-bind="pa.pitcher")
-                    td(ng-bind="pa.hitter")
-                    td(ng-bind="paResultToString(pa.result)")
-                    td(ng-bind="pa.balls + '-' + pa.strikes")
+            form(ng-show="ptInputView === 2", ng-submit="resultListener()")
+              label(for='paResultInput') Plate Appearance Result Selector
+              select#paResultInput.form-control(ng-model='curr.pa.result')
+                option(value='0') --- Select Result ---
+                option(value='1') Single
+                option(value='2') Double
+                option(value='3') Triple
+                option(value='4') Home Run
+                option(value='5') In-Play Out(s)
+                option(value='6') Error
+              br
+              input.btn.btn-default(type='submit', value='Submit Result', ng-disabled="!isResultDataComplete()")
 
-      // /RECENT DATA
+            // /INPUTS
 
-    // /CONTENT
+          // /BUTTONS
 
-  // /CONTAINER
+          // RECENT DATA
+          .col-md-5.col-xs-8.pitchdata
 
-  // MODAL
-  #modal.modal.fade
-    .modal-dialog
-      .modal-content
-        .modal-header
-          h3#modal-title
-        .modal-body
-          p#modal-body
-        .modal-footer
-          button(type="button", class="btn btn-success", value="4") Home Base
-          button(type="button", class="btn btn-primary", value="3") Third Base
-          button(type="button", class="btn btn-primary", value="2") Second Base
-          button(type="button", class="btn btn-primary", value="1") First Base
-          button(type="button", class="btn btn-danger",  value="0") Basepath Out
+            table
+              tr
+                td
+                  table.table.table-bordered
+                    thead
+                      tr
+                        th Num
+                        th Velocity
+                        th Pitch Type
+                        th Pitch Result
+                    tbody
+                      tr(ng-repeat="pitch in curr.pa.pitches")
+                        td(ng-bind="$index + 1")
+                        td(ng-bind="pitch.velocity")
+                        td(ng-bind="pitchTypeToString(pitch.type)")
+                        td(ng-bind="pitchResultToString(pitch.result)")
+              tr
+                td
+                  table.table.table-bordered
+                    thead
+                      tr
+                        th Pitcher
+                        th Hitter
+                        th Result
+                        th Count
+                    tbody
+                      tr(ng-show="curr.inning.pas.length" ng-repeat="pa in curr.inning.pas")
+                        td(ng-bind="pa.pitcher")
+                        td(ng-bind="pa.hitter")
+                        td(ng-bind="paResultToString(pa.result)")
+                        td(ng-bind="pa.balls + '-' + pa.strikes")
+
+          // /RECENT DATA
+
+        // /CONTENT
+
+        // MODAL
+        #modal.modal.fade
+          .modal-dialog
+            .modal-content
+              .modal-header
+                h3#modal-title
+              .modal-body
+                p#modal-body
+              .modal-footer
+                button(type="button", class="btn btn-success", value="4") Home Base
+                button(type="button", class="btn btn-primary", value="3") Third Base
+                button(type="button", class="btn btn-primary", value="2") Second Base
+                button(type="button", class="btn btn-primary", value="1") First Base
+                button(type="button", class="btn btn-danger",  value="0") Basepath Out
+
+
+    // Libraries
+    script(src='/javascripts/libraries/jquery-1.11.0.js')
+    script(src='/javascripts/libraries/bootstrap.min.js')
+    script(src='/javascripts/libraries/d3.v3.min.js')
+    script(src='/javascripts/libraries/angular.min.js')
+    script(src='/javascripts/libraries/ui-bootstrap-tpls-0.14.3.min.js')
+
+    // Pitch Tracker Scripts
+    script(src='/javascripts/constants.js')
+    script(src='/javascripts/pt-graphics.js')
+    script(src='/javascripts/pt-ang.js')

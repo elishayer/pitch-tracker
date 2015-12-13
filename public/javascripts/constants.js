@@ -1,4 +1,8 @@
-// CONSTANTS ----------------------------------------------------------
+/* constants.js
+ * Eli Shayer
+ * ------------
+ * get constants associated with pitch tracking and graphics
+ */
 
 // constants inherent to baseball rules
 var STRIKES_PER_K = 3;
@@ -70,7 +74,7 @@ var PA_RESULT_MAP = {
 var ZONE_PARENT = 'zoneParent';
 var ZONE_ID = 'zone';
 var ZONE_SIZE = document.getElementById(ZONE_PARENT).clientWidth;
-var ZONE_BUFFER = ZONE_SIZE/ 100;
+var ZONE_BUFFER = ZONE_SIZE / 100;
 var BOX_SIZE = (ZONE_SIZE - 2 * ZONE_BUFFER) / 5;
 var ZONE_LINE_WIDTH = ZONE_SIZE/ 75;
 var INNER_SWF = 2;
@@ -117,3 +121,18 @@ var STATE_FILL = '#dddddd';
 var PLAYER_INPUT_GROUP = 0;
 var PITCH_INPUT_GROUP = 1;
 var RESULT_INPUT_GROUP = 2;
+
+// user input constants
+var SIGN_IN = 0;
+var CREATE_ACCOUNT = 1;
+var GUEST_USER = 2;
+
+// app view constants
+var LOGIN = 0;
+var SESSION = 1;
+var INPUT = 2;
+
+// session type constants
+var GAME = 0;
+var PRACTICE = 1;
+var BULLPEN = 2;

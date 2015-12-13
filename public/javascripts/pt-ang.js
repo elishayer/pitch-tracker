@@ -7,19 +7,62 @@
 
 angular.module('ptApp', ['ui.bootstrap'])
 	.controller('PitchTrackerController', function($scope, $http) {
-		$scope.mode = 'game'; // TODO: multiple modes: game, bp, pitching only, etc.
-		$scope.error = false; // true if an error is to be displayed
-		$scope.message;
-		$scope.curr = {
-			hitter  : '',
-			pitcher : '',
-			inning  : { uninitialized: true },
-			pa      : {},
-			pitch   : {}
-		};
-		$scope.innings = [];
-		$scope.modalQueue = [];
-		$scope.view = PLAYER_INPUT_GROUP;
+		// view variable
+		$scope.view = LOGIN;
+
+		// initialize sign in variables
+		$scope.user = { name : '' };
+		$scope.accountFormType;
+		$scope.accountFormName;
+		$scope.accountFormPassword;
+
+		// an action related to accounts: sign in, create an account, or guest user
+		$scope.accountAction = function(type) {
+			$scope.accountFormType = type;
+			if (type === GUEST_USER) {
+				$scope.user.name = 'Guest';
+				$scope.view = SESSION;
+			}
+		}
+
+		$scope.accountFormSubmit = function() {
+			if ($scope.accountFormType === SIGN_IN) {
+				$http.post('/api/user/login', {
+					name     : $scope.accountFormName,
+					password : $scope.accountFormPassword
+				}).then(function(response) {
+					if (response.data.user) {
+						$scope.user.name = response.data.user.name;
+						$scope.user._id = response.data.user._id;
+						$scope.view = SESSION;
+					} else {
+						$scope.userLoginError = 'Username or password is incorrect';
+					}
+				}, function(response) {
+					$scope.userLoginError = 'There was an error logging in to your account';
+				});
+			} else if ($scope.accountFormType === CREATE_ACCOUNT) {
+				$http.post('/api/user/create', {
+					name     : $scope.accountFormName,
+					password : $scope.accountFormPassword
+				}).then(function(response) {
+					$scope.user.name = response.data.user.name;
+					$scope.user._id = response.data.user._id;
+					$scope.view = SESSION;
+				}, function(response) {
+					$scope.userLoginError = 'There was an error creating your account';
+				});
+			}
+		}
+
+		$scope.accountFormHeader = function() {
+			return $scope.accountFormType === SIGN_IN ? "Sign in to your account" : "Create an account";
+		}
+
+		$scope.setSessionType = function(type) {
+			$scope.sessionType = type;
+			$scope.view = INPUT;
+		}
 
 		// helper for whether the player data is complete
 		$scope.isPlayerDataComplete = function() {
@@ -45,7 +88,7 @@ angular.module('ptApp', ['ui.bootstrap'])
 					$scope.curr.pa._id = response.data.pa;
 
 					// change the input view to the pitch input
-					$scope.view = PITCH_INPUT_GROUP;
+					$scope.ptInputView = PITCH_INPUT_GROUP;
 				}, function(response) {
 					console.log(response);
 					$scope.error = true;
@@ -159,7 +202,7 @@ angular.module('ptApp', ['ui.bootstrap'])
 
 					// if the ball was put in play switch to the result input view
 					if (pitch.result === IN_PLAY) {
-						$scope.view = RESULT_INPUT_GROUP;
+						$scope.ptInputView = RESULT_INPUT_GROUP;
 					}
 				}, function(response) {
 					$scope.error = true;
@@ -221,7 +264,7 @@ angular.module('ptApp', ['ui.bootstrap'])
 				$scope.advanceBaserunners(pa.hitter, result);
 
 				// reset the view to the player selector
-				$scope.view = PLAYER_INPUT_GROUP;
+				$scope.ptInputView = PLAYER_INPUT_GROUP;
 			}, function(response) {
 				$scope.error = true;
 			});
@@ -463,19 +506,19 @@ angular.module('ptApp', ['ui.bootstrap'])
 
 		// generate the message based on the input view and error
 		$scope.generateMessage = function() {
-			if ($scope.view === PLAYER_INPUT_GROUP) {
+			if ($scope.ptInputView === PLAYER_INPUT_GROUP) {
 				if ($scope.error) {
 					return 'There was an error entering the player data';
 				} else {
 					return 'Enter the pitcher and the hitter';
 				}
-			} else if ($scope.view === PITCH_INPUT_GROUP) {
+			} else if ($scope.ptInputView === PITCH_INPUT_GROUP) {
 				if ($scope.error) {
 					return 'There was an error entering the pitch data';
 				} else {
 					return 'Enter the pitch data';
 				}
-			} else if ($scope.view === RESULT_INPUT_GROUP) {
+			} else if ($scope.ptInputView === RESULT_INPUT_GROUP) {
 				if ($scope.error) {
 					return 'There was an error entering the plate appearance result data';
 				} else {
@@ -549,6 +592,21 @@ angular.module('ptApp', ['ui.bootstrap'])
 			}
 			return sum;
 		}
+
+		// ------------------------------------------------ initialization
+		$scope.mode = 'game'; // TODO: multiple modes: game, bp, pitching only, etc.
+		$scope.error = false; // true if an error is to be displayed
+		$scope.message;
+		$scope.curr = {
+			hitter  : '',
+			pitcher : '',
+			inning  : { uninitialized: true },
+			pa      : {},
+			pitch   : {}
+		};
+		$scope.innings = [];
+		$scope.modalQueue = [];
+		$scope.ptInputView = PLAYER_INPUT_GROUP;
 
 		// initialize the inning, pa, and pitch objects
 		$scope.initializeInning();

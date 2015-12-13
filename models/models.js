@@ -2,22 +2,49 @@
  * models.js
  * -------------
  * Contains the models for the Pitch Tracker application:
- * 1) Session
- * 2) Team
- * 3) Plate Appearance
- * 4) Pitch
- *
- * TODO:
- * Player, Game, Inning, Half-Inning
+ *   - Plate Appearance
+ *   - Pitch
+ *   - User
+ *   - Session
+ *   - Player
+ *   - Team
  */
 
 // require the mongoose module
 var mongoose = require('mongoose');
-/*
+
+// ---------------------------------------- Player
+var PlayerSchema = new mongoose.Schema({
+	name         : String,
+	team         : mongoose.Schema.Types.ObjectId,
+	sessions     : [mongoose.Schema.Types.ObjectId],
+	number       : Number,
+	position     : [String],
+	height       : Number,
+	weight       : Number,
+	year         : String,
+	major        : String,
+	hometown     : String,
+	batHand      : String,
+	throwHand    : String
+});
+
+var Team = mongoose.model('Team', TeamSchema);
+
+// ---------------------------------------- Team
+var TeamSchema = new mongoose.Schema({
+	name         : String,
+	players      : [mongoose.Schema.Types.ObjectId],
+	sessions     : [mongoose.Schema.Types.ObjectId]
+});
+
+var Team = mongoose.model('Team', TeamSchema);
+
 // ---------------------------------------- Session
 var SessionSchema = new mongoose.Schema({
 	date         : Date,
 	user         : mongoose.Schema.Types.ObjectId,
+	type         : Number,
 	teams        : {
 		home         : mongoose.Schema.Types.ObjectId,
 		away         : mongoose.Schema.Types.ObjectId
@@ -26,16 +53,6 @@ var SessionSchema = new mongoose.Schema({
 });
 
 var Session = mongoose.model('Session', SessionSchema);
-
-// ---------------------------------------- Team
-var TeamSchema = new mongoose.Schema({
-	name         : String,
-	conference   : String,
-	players      : [mongoose.Schema.Types.ObjectId]
-});
-
-var Team = mongoose.model('Team', TeamSchema);
-*/
 
 // ---------------------------------------- User
 var UserSchema = new mongoose.Schema({
@@ -80,5 +97,6 @@ var Pitch = mongoose.model('Pitch', PitchSchema);
 module.exports = {
 	PA: PA,
 	Pitch: Pitch,
-	User: User
+	User: User,
+	Session: Session
 }
