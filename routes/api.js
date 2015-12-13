@@ -158,25 +158,25 @@ router.post('/addpitch', function(req, res) {
 // ---------------------------------------- User
 /* POST a new user */
 router.post('/user/create', function(req, res) {
-	new req.models.User(req.body).save(function(err, user) {
+	// only one user for each name
+	req.models.User.findOne({ name: req.body.name }, function(err, user) {
 		if (err) {
 			sendError(res, err);
+		} else if (user) {
+			sendError(res, req.body.name + ' has already been taken');
 		} else {
-			// only one user for each name
-			req.models.User.findOne({ name: req.body.name }, function(err, user) {
-				console.log(user);
+			// create a user
+			new req.models.User(req.body).save(function(err, user) {
 				if (err) {
 					sendError(res, err);
-				} else if (user) {
-					sendError(res, req.body.name + ' has already been taken');
+				} else {
+					// set the session user
+					req.session.user = user;
+					res.status(STATUS_OK).send({
+						msg  : '',
+						user : user.name
+					});
 				}
-			});
-
-			// set the session user
-			req.session.user = user;
-			res.status(STATUS_OK).send({
-				msg  : '',
-				user : user.name
 			});
 		}
 	});

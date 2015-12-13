@@ -1,0 +1,65 @@
+doctype html
+html
+  head
+    title Pitch Tracker
+
+    // Stylesheets
+    link(rel='stylesheet', href='/stylesheets/bootstrap.min.css')
+    link(rel='stylesheet', href='/stylesheets/pitch-tracker.css')
+
+  body(ng-app='ptAdminApp', ng-controller='PTAdminController as ptAdmin')
+    .container
+      // TITLE
+      h1#title Pitch Tracker
+
+      .row#tabs
+        .col-xs-12
+          ul.nav.nav-tabs.nav-justified
+            li(role="presentation", ng-repeat="tab in tabs", ng-class="{ active : currTab === $index }")
+              a(href="#", ng-click="setTab($index)") {{ tab }}
+      .row(ng-show="isActiveTab('Users')")
+        .col-xs-6
+          h3 Current Users
+          table.table
+            thead
+              tr
+                td Edit
+                td Delete
+                td Name
+                td Password
+            tbody
+              tr(ng-repeat="user in users" ng-class="{ active : isEditActive($index) }")
+                td
+                  a(href="#", ng-click="editUser($index)") Edit
+                td
+                  a(href="#", ng-click="deleteUser($index)") Delete
+                td(ng-bind="user.name")
+                td(ng-bind="user.password")
+          button.btn.btn-success(type="button", ng-click="createUser()", ng-disabled="edit.user.active || new.user") New User
+        .col-xs-6
+          h3 User From
+          form(ng-submit='submitUserForm()')
+            .form-group
+              label(for='userFormName') Name
+              input.form-control#userFormName(type='text', placeholder='Name', ng-model='edit.user.name', ng-disabled="!new.user && !edit.user.active")
+            .form-group
+              label(for="userFormPassword") Password
+              input.form-control#userFormPassword(type="text", placeholder="Password", ng-model="edit.user.password", ng-disabled="!new.user && !edit.user.active")
+            button.btn.btn-danger(type="button", ng-click="closeUserForm()", ng-disabled="!new.user && !edit.user.active") Cancel
+            button.btn.btn-primary(type="submit", ng-disabled="!edit.user.name.length || !edit.user.password.length") Submit
+          p.error(ng-show="error.user" ng-bind="error.user")
+
+      .row(ng-show="isActiveTab('Teams')")
+        .col-xs-12
+          p Teams
+
+
+    // Libraries
+    script(src='/javascripts/libraries/jquery-1.11.0.js')
+    script(src='/javascripts/libraries/bootstrap.min.js')
+    script(src='/javascripts/libraries/d3.v3.min.js')
+    script(src='/javascripts/libraries/angular.min.js')
+    script(src='/javascripts/libraries/ui-bootstrap-tpls-0.14.3.min.js')
+
+    // Pitch Tracker Admin Script
+    script(src='/javascripts/pt-admin.js')

@@ -29,7 +29,7 @@ var PlayerSchema = new mongoose.Schema({
 	throwHand    : String
 });
 
-var Team = mongoose.model('Team', TeamSchema);
+var Player = mongoose.model('Player', PlayerSchema);
 
 // ---------------------------------------- Team
 var TeamSchema = new mongoose.Schema({
@@ -95,8 +95,10 @@ var Pitch = mongoose.model('Pitch', PitchSchema);
 
 // ---------------------------------------- Exports
 module.exports = {
-	PA: PA,
-	Pitch: Pitch,
-	User: User,
-	Session: Session
+	PA      : PA,
+	Pitch   : Pitch,
+	User    : User,
+	Session : Session,
+	Team    : Team,
+	Player  : Player
 }
