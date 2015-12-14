@@ -6,42 +6,41 @@
 
 angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', function($scope, $http, $uibModal) {
 	// constants
-	$scope.tabs = [ 'Users', 'Teams', 'Players' ];
-
-	// edit variables
-	$scope.edit = {
-		user : {
-			active   : false,
-			index    : null,
-			name     : '',
-			password : '',
+	$scope.tabs = [
+		{
+			name    : 'user',
+			fields  : [ 'name', 'password' ],
+			getName : function(user) { return user.name; }
 		},
-		team : {
-			active       : false,
-			index        : null,
-			school       : '',
-			abbreviation : '',
-			mascot       : ''
+		{
+			name    : 'team',
+			fields  : [ 'school', 'abbreviation', 'mascot' ],
+			getName : function(team) { return 'the' + team.school + ' ' + team.mascot; }
 		},
-		player : {
-			active       : false,
-			index        : null,
-			// TODO
+		{
+			name    : 'player',
+			fields  : [ 'TODO' ],
+			getName : function(player) { return player.name; }
 		}
-	};
+	];
 
-	// new object variables
-	$scope.new = {
-		user   : false,
-		team   : false,
-		player : false,
-	};
+	// initialize scope edit, new, error, and data variables
+	$scope.edit = {};
+	$scope.new = {};
+	$scope.error = {};
+	$scope.data = {};
 
-	// error variables
-	$scope.error = {
-		user   : null,
-		team   : null,
-		player : null,
+	for (var i = 0; i < $scope.tabs.length; i++) {
+		// initialize the edit variable including blank strings for each field
+		var edit = { active : false, index  : null };
+		for (var j = 0; j < $scope.tabs[i].fields.length; j++) {
+			edit[$scope.tabs[i].fields[j]] = '';
+		}
+
+		// set the edit, new, and error variables
+		$scope.edit[$scope.tabs[i].name] = edit;
+		$scope.new[$scope.tabs[i].name] = false;
+		$scope.error[$scope.tabs[i].name] = null;
 	}
 
 	// the current tab, a setter function, and a predicate isActiveTab function
@@ -50,84 +49,82 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 		$scope.currTab = tab;
 	}
 	$scope.isActiveTab = function(tab) {
-		return $scope.tabs[$scope.currTab] === tab;
+		return $scope.tabs[$scope.currTab].name === tab;
 	}
 
 	// ---------------------------------------------------- Initialize
-	// get the list of all users
-	$http.get('/admin/user/list').then(function(response) {
-		$scope.users = response.data;
-		$scope.closeUserForm();
-	}, function(response) {
-		$scope.error.user = 'ERROR: ' + response.data.msg;
+	$scope.tabs.forEach(function(val, i) {
+		// get the list of all data for the data type
+		$http.get('/admin/' + $scope.tabs[i].name + '/list').then(function(response) {
+			$scope.data[$scope.tabs[i].name] = response.data;
+		}, function(response) {
+			$scope.error[$scope.tabs[i].name] = 'ERROR: ' + response.data.msg;
+		});
 	});
 
-	// get the list of all teams
-	$http.get('/admin/team/list').then(function(response) {
-		$scope.teams = response.data;
-	}, function(response) {
-		$scope.error.team = 'ERROR: ' + response.data.msg;
+	// ---------------------------------------------------- Model types
+	// helper function to capitalize a word
+	capitalize = function(str) {
+		return str[0].toUpperCase() + str.slice(1);
+	}
+
+	// create the methods that apply to each tab
+	$scope.tabs.forEach(function(tab, i) {
+		// open the form for editing an existing object
+		$scope['edit' + capitalize(tab.name)] = function(index) {
+			// get object information
+			var obj = $scope.data[tab.name][index];
+
+			// set the edit information
+			$scope.edit[tab.name].active = true;
+			$scope.edit[tab.name].index = index;
+			tab.fields.forEach(function(field, j) {
+				$scope.edit[tab.name][field] = obj[field];
+			});
+		}
+
+		// open the form for creating a new object
+		$scope['create' + capitalize(tab.name)] = function() {
+			$scope.new[tab.name] = true;
+		}
+
+		// close the form by resetting the edit and new fields
+		$scope['close' + capitalize(tab.name) + 'Form'] = function() {
+			$scope.edit[tab.name].active = false;
+			$scope.edit[tab.name].index = null;
+			tab.fields.forEach(function(field, j) {
+				$scope.edit[tab.name][field] = '';
+			});
+			$scope.new[tab.name] = false;
+			$scope.error[tab.name] = false;
+		}
+
+		// determines whether an object is currently active
+		$scope['is' + capitalize(tab.name) + 'Active'] = function(index) {
+			return $scope.edit[tab.name].active && index === $scope.edit[tab.name].index;
+		}
+
+		$scope['delete' + capitalize(tab.name)] = function(index) {
+			// get the object to be deleted
+			var obj = $scope.data[tab.name][index];
+
+			// confirm in a modal that the deletion is really wanted
+			$scope.openModal('Are you sure you want to delete <b>' + tab.getName(obj) + '</b>?',
+				'If you proceed, all data associated with <b>' + tab.getName(obj) + '</b> will be deleted',
+				function() {
+					// delete the object
+					$http.delete('/admin/' + tab.name + '/delete/' + obj._id).then(function(response) {
+						// splice out the deleted object and close the form
+						$scope.data[tab.name].splice(index, 1);
+						$scope['close' + capitalize(tab.name) + 'Form']();
+					}, function() {
+						$scope.error[tab.name] = 'ERROR: ' + response.data.msg;
+					});
+				});
+		}
 	});
 
 	// ---------------------------------------------------- Users
-	// set up the edit form for a specific user
-	$scope.editUser = function(index) {
-		// get the user information
-		var user = $scope.users[index];
-
-		// set the edit information
-		$scope.edit.user = {
-			active   : true,
-			index    : index,
-			name     : user.name,
-			password : user.password,
-		}
-	}
-
-	$scope.createUser = function() {
-		$scope.new.user = true;
-	}
-
-	// end a user edit or new user creation by reseting the edit.user and new.user data
-	$scope.closeUserForm = function() {
-		$scope.edit.user = {
-			active   : false,
-			index    : null,
-			name     : '',
-			password : '',
-		}
-		$scope.new.user = false;
-		$scope.error.user = null;
-	}
-
-	// determines whether a user is actively being edited
-	$scope.isUserActive = function(index) {
-		return $scope.edit.user.active && index === $scope.edit.user.index;
-	}
-	
-	// delete a user
-	$scope.deleteUser = function(index) {
-		// get the user information
-		var user = $scope.users[index];
-
-		// confirm in a modal that the deletion is really wanted
-		$scope.openModal('Are you sure you want to delete ' + user.name + '?',
-			'You will delete all information associated with ' + user.name,
-			[
-				{type: 'success', click: 'yes', fn: function(instance) {instance.close(); }, text: 'Yes' },
-				{type: 'danger', click: 'no', fn: function(instance) {instance.dismiss(); }, text: 'No' },
-			], function() {
-				// delete the user
-				$http.delete('/admin/user/delete/' + user._id).then(function(response) {
-					// update the users list by splicing out the deleted user
-					$scope.users.splice(index, 1);
-					$scope.closeUserForm();
-				}, function(response) {
-					$scope.error.user = 'ERROR: ' + response.data.msg;
-				});
-			});
-	}
-
 	// submit the user form to either edit a user or create a user
 	$scope.submitUserForm = function() {
 		if ($scope.new.user) {
@@ -136,20 +133,17 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 			// confirm in a modal that the creation is really wanted
 			$scope.openModal('Are you sure you want to create ' + user.name + '?',
 				'This will create a new account with name ' + user.name + ' and password ' + user.password,
-				[
-					{type: 'success', click: 'yes', fn: function(instance) {instance.close(); }, text: 'Yes' },
-					{type: 'danger', click: 'no', fn: function(instance) {instance.dismiss(); }, text: 'No' },
-				], function() {
+				function() {
 					// create the user
 					$http.post('admin/user/create', user).then(function(response) {
-						$scope.users.push(response.data.user);
+						$scope.data.user.push(response.data.user);
 						$scope.closeUserForm();
 					}, function(response) {
 						$scope.error.user = 'ERROR: ' + response.data.msg;
 					});
 				}, $scope.closeUserForm);
 		} else {
-			var original = $scope.users[$scope.edit.user.index];
+			var original = $scope.data.user[$scope.edit.user.index];
 			var edited = $scope.edit.user;
 			if (original.name !== edited.name || original.password !== edited.password) {
 				// edit the user, submitted the new name and password
@@ -158,14 +152,11 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 				// confirm in a modal that the edit is really wanted
 				$scope.openModal('Are you sure you want to edit ' + user.name + "'s profile?",
 					'This will edit the account to have name ' + user.name + ' and password ' + user.password,
-					[
-						{type: 'success', click: 'yes', fn: function(instance) {instance.close(); }, text: 'Yes' },
-						{type: 'danger', click: 'no', fn: function(instance) {instance.dismiss(); }, text: 'No' },
-					], function() {
+					function() {
 						// edit the user
 						$http.post('/admin/user/edit/' + original._id, user).then(function(response) {
 							// update the user list locally and close the form
-							$scope.users[$scope.edit.user.index] = response.data.user;
+							$scope.data.user[$scope.edit.user.index] = response.data.user;
 							$scope.closeUserForm();
 						}, function(response) {
 							$scope.error.user = 'ERROR: ' + response.data.msg;
@@ -178,67 +169,6 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 	}
 
 	// ---------------------------------------------------- Teams
-	// open the team form for editing
-	$scope.editTeam = function(index) {
-		// get the team information
-		var team = $scope.teams[index];
-
-		// set the edit information
-		$scope.edit.team = {
-			active       : true,
-			index        : index,
-			school       : team.school,
-			abbreviation : team.abbreviation,
-			mascot       : team.mascot,
-		}
-	}
-
-	// open the team form for creation of a new team
-	$scope.createTeam = function() {
-		$scope.new.team = true;
-	}
-
-	// close the team form by reseting the edit data
-	$scope.closeTeamForm = function() {
-		$scope.edit.team = {
-			active       : false,
-			index        : null,
-			school       : '',
-			abbreviation : '',
-			mascot       : ''
-		}
-		$scope.new.team = false;
-		$scope.error.team = null;
-	}
-
-	// determines whether a team is active
-	$scope.isTeamActive = function(index) {
-		return $scope.edit.team.active && index === $scope.edit.team.index;
-	}
-
-	// delete a team
-	$scope.deleteTeam = function(index) {
-		// get the team information
-		var team = $scope.teams[index];
-
-		// confirm in a modal that the deletion is really wanted
-		$scope.openModal('Are you sure you want to delete ' + team.school + '?',
-			'You will delete all information associated with ' + team.school,
-			[
-				{type: 'success', click: 'yes', fn: function(instance) {instance.close(); }, text: 'Yes' },
-				{type: 'danger', click: 'no', fn: function(instance) {instance.dismiss(); }, text: 'No' },
-			], function() {
-				// delete the team
-				$http.delete('/admin/team/delete/' + team._id).then(function(response) {
-					// update the teams list by splicing out the deleted team
-					$scope.teams.splice(index, 1);
-					$scope.closeTeamForm();
-				}, function(response) {
-					$scope.error.team = 'ERROR: ' + response.data.msg;
-				});
-			});
-	}
-
 	// submit the team form. Currently just adding new teams. TODO: editing
 	$scope.submitTeamForm = function() {
 		if ($scope.new.team) {
@@ -251,20 +181,17 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 			// confirm in a modal that the team creation is really wanted
 			$scope.openModal('Are you sure you want to create ' + team.school + '?',
 				'This will create the ' + team.school + ' ' + team.mascot + ' with abbreviation ' + team.abbreviation,
-				[
-					{type: 'success', click: 'yes', fn: function(instance) {instance.close(); }, text: 'Yes' },
-					{type: 'danger', click: 'no', fn: function(instance) {instance.dismiss(); }, text: 'No' },
-				], function() {
+				function() {
 					// create the team
 					$http.post('admin/team/create', team).then(function(response) {
-						$scope.teams.push(response.data.team);
+						$scope.data.team.push(response.data.team);
 						$scope.closeTeamForm();
 					}, function(response) {
 						$scope.error.team = 'ERROR: ' + response.data.msg;
 					});
 				}, $scope.closeTeamForm);
 		} else {
-			var original = $scope.teams[$scope.edit.team.index];
+			var original = $scope.data.team[$scope.edit.team.index];
 			var edited = $scope.edit.team;
 			if (original.school !== edited.school || original.abbreviation !== edited.abbreviation || original.mascot !== edited.mascot) {
 				// edit the team, submitted the new data
@@ -273,14 +200,11 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 				// confirm in a modal that the edit is really wanted
 				$scope.openModal('Are you sure you want to edit the data associated with' + team.school + "?",
 					'This will edit the team to be the ' + team.school + ' ' + team.mascot + ' (' + team.abbreviation + ').',
-					[
-						{type: 'success', click: 'yes', fn: function(instance) {instance.close(); }, text: 'Yes' },
-						{type: 'danger', click: 'no', fn: function(instance) {instance.dismiss(); }, text: 'No' },
-					], function() {
+					function() {
 						// edit the team
 						$http.post('/admin/team/edit/' + original._id, team).then(function(response) {
 							// update the team list locally and close the form
-							$scope.teams[$scope.edit.team.index] = response.data.team;
+							$scope.data.team[$scope.edit.team.index] = response.data.team;
 							$scope.closeTeamForm();
 						}, function(response) {
 							$scope.error.team = 'ERROR: ' + response.data.msg;
@@ -293,46 +217,31 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 	}
 
 	// ---------------------------------------------------- Modal
-	// a helper to open a modal. The tempalte is made from the heaer, body and buttons
-	// resolve is the variables to use as locals in the modal
+	// a helper to open a modal. The tempalte is made from the header, body and buttons
 	// cbSuccess and cbFailure are callbacks based on modal selection
-	$scope.openModal = function(header, body, buttons, cbSuccess, cbFailure) {
-		// construct the template from the arguments and form the resolve object
+	$scope.openModal = function(header, body, cbSuccess, cbFailure) {
+		// construct the template from the arguments
 		template = '';
-		var resolve = {};
 		template += '<div class="modal-header"><h3 class="modal-title">' + header + '</h3></div>';
 		template += '<div class="modal-body"><p>' + body + '</p></div>';
 		template += '<div class="modal-footer">';
-		// add buttons to the template and actions to the resolve object
-		for (var i = 0; i < buttons.length; i++) {
-			template += '<button class="btn btn-' + buttons[i].type + '" type="button"';
-			template += ' ng-click="' + buttons[i].click + '()">' + buttons[i].text + '</button>';
-			resolve[buttons[i].click] = buttons[i].fn;
-		}
+		template += '<button class="btn btn-success" type="button" ng-click="yes()">Yes</button>';
+		template += '<button class="btn btn-danger" type="button" ng-click="no()">No</button>';
 		template += '</div>';
 
 		var modalInstance = $uibModal.open({
 			animation  : true,
 			template   : template,
 			backdrop   : 'static',
-			controller : 'ModalInstanceCtrl',
-			resolve    : {
-				functions : function () {
-					return resolve;
-				}
-			}
+			controller : 'ModalInstanceCtrl'
 		});
 
 		modalInstance.result.then(cbSuccess, cbFailure);
 	};
 });
 
-angular.module('ptAdminApp').controller('ModalInstanceCtrl', function ($scope, $uibModalInstance, functions) {
-	$scope.yes = function () {
-		functions['yes']($uibModalInstance);
-	}
-
-	$scope.no = function () {
-		functions['no']($uibModalInstance);
-	}
+// the modal controller, which simply takes either a 'yes' or 'no' and sends the proper response
+angular.module('ptAdminApp').controller('ModalInstanceCtrl', function ($scope, $uibModalInstance) {
+	$scope.yes = function () { $uibModalInstance.close(); }
+	$scope.no = function () { $uibModalInstance.dismiss(); }
 });

@@ -16,10 +16,10 @@ html
         .col-xs-12
           ul.nav.nav-tabs.nav-justified
             li(role="presentation", ng-repeat="tab in tabs", ng-class="{ active : currTab === $index }")
-              a(href="#", ng-click="setTab($index)") {{ tab }}
-      .row(ng-show="isActiveTab('Users')")
+              a(href="#", ng-click="setTab($index)") {{ tab.name }}
+      .row(ng-show="isActiveTab('user')")
         .col-xs-12.col-sm-6
-          h3(ng-bind="'Users (' + users.length + ')'")
+          h3(ng-bind="'Users (' + data.user.length + ')'")
           table.table
             thead
               tr
@@ -28,7 +28,7 @@ html
                 th Name
                 th Password
             tbody
-              tr(ng-repeat="user in users", ng-class="{ active : isUserActive($index) }")
+              tr(ng-repeat="user in data.user", ng-class="{ active : isUserActive($index) }")
                 td
                   a(href="#", ng-click="editUser($index)") Edit
                 td
@@ -49,9 +49,9 @@ html
             button.btn.btn-danger(type="button", ng-click="closeUserForm()", ng-disabled="!new.user && !edit.user.active") Cancel
           p.error(ng-show="error.user" ng-bind="error.user")
 
-      .row(ng-show="isActiveTab('Teams')")
+      .row(ng-show="isActiveTab('team')")
         .col-xs-6
-          h3(ng-bind="'Teams (' + teams.length + ')'")
+          h3(ng-bind="'Teams (' + data.team.length + ')'")
           table.table
             thead
               tr
@@ -62,7 +62,7 @@ html
                 th Abbreviation
                 th Num Players
             tbody
-              tr(ng-repeat="team in teams", ng-class="{ active : isTeamActive($index) }")
+              tr(ng-repeat="team in data.team", ng-class="{ active : isTeamActive($index) }")
                 td
                   a(href="#", ng-click="editTeam($index)") Edit
                 td

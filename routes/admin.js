@@ -136,4 +136,17 @@ router.delete('/team/delete/:id', function(req, res, next) {
 	});
 });
 
+
+// ---------------------------------------- Players
+/* GET all players. */
+router.get('/player/list', function(req, res, next) {
+	req.models.Player.find({}, function(err, players) {
+		if (err) {
+			res.status(STATUS_ERROR).send({ msg: err });
+		} else {
+			res.json(players);
+		}
+	});
+});
+
 module.exports = router;
