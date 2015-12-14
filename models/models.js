@@ -33,7 +33,9 @@ var Player = mongoose.model('Player', PlayerSchema);
 
 // ---------------------------------------- Team
 var TeamSchema = new mongoose.Schema({
-	name         : String,
+	school       : String,
+	mascot       : String,
+	abbreviation : String,
 	players      : [mongoose.Schema.Types.ObjectId],
 	sessions     : [mongoose.Schema.Types.ObjectId]
 });
