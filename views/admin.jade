@@ -16,77 +16,36 @@ html
         .col-xs-12
           ul.nav.nav-tabs.nav-justified
             li(role="presentation", ng-repeat="tab in tabs", ng-class="{ active : currTab === $index }")
-              a(href="#", ng-click="setTab($index)") {{ tab.name }}
-      .row(ng-show="isActiveTab('user')")
-        .col-xs-12.col-sm-6
-          h3(ng-bind="'Users (' + data.user.length + ')'")
+              a(href="#", ng-click="setTab($index)", ng-bind="pluralize(capitalize(tab.name))")
+      .row(ng-repeat="tab in tabs", ng-show="isActiveTab('{{ tab.name }}')")
+        .col-xs-12.col-sm-8
+          h3(ng-bind="pluralize(capitalize(tab.name)) + ' (' + data[tab.name].length + ')'")
           table.table
             thead
               tr
                 th Edit
                 th Delete
-                th Name
-                th Password
+                th(ng-repeat="field in tab.fields", ng-bind="capitalize(field.abbr)") 
             tbody
-              tr(ng-repeat="user in data.user", ng-class="{ active : isUserActive($index) }")
+              tr(ng-repeat="datum in data[tab.name]", ng-class="{active: tab.isActive()}")
                 td
-                  a(href="#", ng-click="editUser($index)") Edit
+                  a(href="#", ng-click="tab.openEditForm($index)") Edit
                 td
-                  a(href="#", ng-click="deleteUser($index)") Delete
-                td(ng-bind="user.name")
-                td(ng-bind="user.password")
-          button.btn.btn-success(type="button", ng-click="createUser()", ng-disabled="edit.user.active || new.user") New User
-        .col-xs-12.col-sm-6
-          h3 User Form
-          form(ng-submit='submitUserForm()')
-            .form-group
-              label(for='userFormName') Name
-              input.form-control#userFormName(type='text', placeholder='Name', ng-model='edit.user.name', ng-disabled="!new.user && !edit.user.active")
-            .form-group
-              label(for="userFormPassword") Password
-              input.form-control#userFormPassword(type="text", placeholder="Password", ng-model="edit.user.password", ng-disabled="!new.user && !edit.user.active")
-            button.btn.btn-primary(type="submit", ng-disabled="!edit.user.name.length || !edit.user.password.length") Submit
-            button.btn.btn-danger(type="button", ng-click="closeUserForm()", ng-disabled="!new.user && !edit.user.active") Cancel
-          p.error(ng-show="error.user" ng-bind="error.user")
-
-      .row(ng-show="isActiveTab('team')")
-        .col-xs-6
-          h3(ng-bind="'Teams (' + data.team.length + ')'")
-          table.table
-            thead
-              tr
-                th Edit
-                th Delete
-                th School
-                th Mascot
-                th Abbreviation
-                th Num Players
-            tbody
-              tr(ng-repeat="team in data.team", ng-class="{ active : isTeamActive($index) }")
-                td
-                  a(href="#", ng-click="editTeam($index)") Edit
-                td
-                  a(href="#", ng-click="deleteTeam($index)") Delete
-                td(ng-bind="team.school")
-                td(ng-bind="team.mascot")
-                td(ng-bind="team.abbreviation")
-                td(ng-bind="team.players.length")
-          button.btn.btn-success(type="button", ng-click="createTeam()", ng-disabled="edit.team.active || new.team") New Team
-        .col-xs-6
-          h3 Team Form
-          form(ng-submit='submitTeamForm()')
-            .form-group
-              label(for='teamFormSchool') School
-              input.form-control#teamFormSchool(type='text', placeholder='School', ng-model='edit.team.school', ng-disabled="!new.team && !edit.team.active")
-            .form-group
-              label(for="teamFormMascot") Mascot
-              input.form-control#teamFormMascot(type="text", placeholder="Mascot", ng-model="edit.team.mascot", ng-disabled="!new.team && !edit.team.active")
-            .form-group
-              label(for="teamFormAbbreviation") Abbreviation
-              input.form-control#teamFormAbbreviation(type="text", placeholder="Abbreviation", ng-model="edit.team.abbreviation", ng-disabled="!new.team && !edit.team.active")
-            button.btn.btn-primary(type="submit", ng-disabled="!edit.team.school.length || !edit.team.abbreviation.length || !edit.team.mascot.length") Submit
-            button.btn.btn-danger(type="button", ng-click="closeTeamForm()", ng-disabled="!new.team && !edit.team.active") Cancel
-          p.error(ng-show="error.team" ng-bind="error.team")
+                  a(href="#", ng-click="tab.delete($index)") Delete
+                td(ng-repeat="field in tab.fields" ng-bind="datum[field.name]")
+          button.btn.btn-success(type="button", ng-click="tab.openCreateForm()", ng-disabled="tab.isFormOpen()", ng-bind="'New ' + capitalize(tab.name) ")
+        .col-xs-12.col-sm-4
+          h3(ng-bind="capitalize(tab.name) + ' Form'")
+          form(ng-submit="tab.submitForm()")
+            .form-group(ng-repeat="field in tab.fields")
+              label(for="{{ tab.name }}Form{{ capitalize(field.name) }}", ng-bind="capitalize(field.name)")
+              input.form-control(ng-if="!field.type || field.type !== 'select'", id="{{ tab.name }}Form{{ capitalize(field.name) }}", type="{{ field.type ? field.type : 'text' }}", placeholder="{{ capitalize(field.name) }}", ng-model="edit[tab.name][field.name]", ng-disabled="!tab.isFormOpen()")
+              select.form-control(ng-if="field.type && field.type === 'select'", id="{{ tab.name }}Form{{ capitalize(field.name) }}", ng-model="edit[tab.name][field.name]", ng-disabled="!tab.isFormOpen()")
+                option(value="", disabled, selected, hidden, ng-bind="'Please Choose a ' + capitalize(field.name)")
+                option(ng-repeat="datum in data[field.name]", value="{{ datum._id }}", ng-bind="datum.school")
+            button.btn.btn-primary(type="submit", ng-disabled="!tab.isFormOpen() || !tab.isFormComplete()") Submit
+            button.btn.btn-danger(type="button", ng-click="tab.closeForm()", ng-disabled="!tab.isFormOpen()") Cancel
+          p.error(ng-show="error[tab.name]" ng-bind="error[tab.name]")
 
     // Libraries
     script(src='/javascripts/libraries/jquery-1.11.0.js')

@@ -9,18 +9,56 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 	$scope.tabs = [
 		{
 			name    : 'user',
-			fields  : [ 'name', 'password' ],
-			getName : function(user) { return user.name; }
+			fields  : [ { name: 'name', abbr: 'name' }, { name: 'password', abbr: 'password'} ],
+			getName : function(user) { return user.name; },
+			methods : {
+				delete : {},
+				create : {
+					getTitle : function(user) { return 'Are you sure you want to create a new user named ' + user.name + '?'; },
+					getBody  : function(user) { return 'This will create a user named ' + user.name + ' with password ' + user.password + '.'; },
+				},
+				edit   : {
+					getTitle : function(user) { return 'Are you sure you want to edit ' + user.name + "'s account?"; },
+					getBody  : function(user) { return 'This will change the account information associated with ' + user.name + '.'; }
+				}
+			}
 		},
 		{
 			name    : 'team',
-			fields  : [ 'school', 'abbreviation', 'mascot' ],
-			getName : function(team) { return 'the' + team.school + ' ' + team.mascot; }
+			fields  : [ { name: 'school', abbr: 'school' }, { name: 'mascot', abbr: 'mascot' },
+			 	{ name: 'abbreviation', abbr: 'abbreviation'} ],
+			getName : function(team) { return 'the ' + team.school + ' ' + team.mascot; },
+			methods : {
+				delete : {},
+				create : {
+					getTitle : function(team) { return 'Are you sure you want to create a new team called the ' + team.school + ' ' + team.mascot + '?'; },
+					getBody  : function(team) { return 'This will create a team from the ' + team.school + '.'; },
+				},
+				edit   : {
+					getTitle : function(team) { return 'Are you sure you want to edit ' + team.school + '?'; },
+					getBody  : function(team) { return 'This will change the information associated with ' + team.school + '.'; }
+				}
+			}
 		},
 		{
 			name    : 'player',
-			fields  : [ 'TODO' ],
-			getName : function(player) { return player.name; }
+			fields  : [ {name: 'name', abbr: 'name' }, {name: 'team', abbr: 'team', type: 'select' },
+				{ name: 'number', abbr: '#', type: 'number' }, { name: 'position', abbr: 'pos' },
+				{ name: 'height', abbr: 'h' }, { name: 'weight', abbr: 'w', type: 'number' },
+				{ name: 'year', abbr: 'year'}, { name: 'bat-hand', abbr: 'bat'},
+				{ name: 'throw-hand', abbr: 'throw' } ],
+			getName : function(player) { return player.name; },
+			methods : {
+				delete : {},
+				create : {
+					getTitle : function(player) { return 'Are you sure you want to create a new player named ' + player.name + '?'; },
+					getBody  : function(player) { return 'This will create a player named ' + player.name + ' on the ' + player.team + ' team.'; },
+				},
+				edit   : {
+					getTitle : function(player) { return 'Are you sure you want to edit ' + player.name + '?'; },
+					getBody  : function(player) { return 'This will change the data associated with ' + player.name + '.'; }
+				}
+			}
 		}
 	];
 
@@ -34,7 +72,7 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 		// initialize the edit variable including blank strings for each field
 		var edit = { active : false, index  : null };
 		for (var j = 0; j < $scope.tabs[i].fields.length; j++) {
-			edit[$scope.tabs[i].fields[j]] = '';
+			edit[$scope.tabs[i].fields[j].name] = '';
 		}
 
 		// set the edit, new, and error variables
@@ -53,25 +91,20 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 	}
 
 	// ---------------------------------------------------- Initialize
-	$scope.tabs.forEach(function(val, i) {
+	$scope.tabs.forEach(function(tab, i) {
 		// get the list of all data for the data type
-		$http.get('/admin/' + $scope.tabs[i].name + '/list').then(function(response) {
-			$scope.data[$scope.tabs[i].name] = response.data;
+		$http.get('/admin/' + tab.name + '/list').then(function(response) {
+			$scope.data[tab.name] = response.data;
 		}, function(response) {
-			$scope.error[$scope.tabs[i].name] = 'ERROR: ' + response.data.msg;
+			$scope.error[tab.name] = 'ERROR: ' + response.data.msg;
 		});
 	});
 
 	// ---------------------------------------------------- Model types
-	// helper function to capitalize a word
-	capitalize = function(str) {
-		return str[0].toUpperCase() + str.slice(1);
-	}
-
-	// create the methods that apply to each tab
+	// create the methods that apply to each tab, and add them to the tab object
 	$scope.tabs.forEach(function(tab, i) {
 		// open the form for editing an existing object
-		$scope['edit' + capitalize(tab.name)] = function(index) {
+		tab.openEditForm = function(index) {
 			// get object information
 			var obj = $scope.data[tab.name][index];
 
@@ -79,141 +112,145 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 			$scope.edit[tab.name].active = true;
 			$scope.edit[tab.name].index = index;
 			tab.fields.forEach(function(field, j) {
-				$scope.edit[tab.name][field] = obj[field];
+				$scope.edit[tab.name][field.name] = obj[field.name];
 			});
 		}
 
+		// predicate method for whether the form is currently open
+		tab.isFormOpen = function() {
+			return $scope.edit[tab.name].active || $scope.new[tab.name];
+		}
+
+		// predicate method for whether the form is complete,
+		// meaning that every input is not empty
+		tab.isFormComplete = function() {
+			for (var i = 0; i < tab.fields.length; i++) {
+				if (!$scope.edit[tab.name][tab.fields[i].name].length) {
+					return false;
+				}
+			}
+			return true;
+		}
+
 		// open the form for creating a new object
-		$scope['create' + capitalize(tab.name)] = function() {
+		tab.openCreateForm = function() {
 			$scope.new[tab.name] = true;
 		}
 
 		// close the form by resetting the edit and new fields
-		$scope['close' + capitalize(tab.name) + 'Form'] = function() {
+		tab.closeForm = function() {
 			$scope.edit[tab.name].active = false;
 			$scope.edit[tab.name].index = null;
 			tab.fields.forEach(function(field, j) {
-				$scope.edit[tab.name][field] = '';
+				$scope.edit[tab.name][field.name] = '';
 			});
 			$scope.new[tab.name] = false;
 			$scope.error[tab.name] = false;
 		}
 
 		// determines whether an object is currently active
-		$scope['is' + capitalize(tab.name) + 'Active'] = function(index) {
+		tab.isActive = function(index) {
 			return $scope.edit[tab.name].active && index === $scope.edit[tab.name].index;
 		}
 
-		$scope['delete' + capitalize(tab.name)] = function(index) {
-			// get the object to be deleted
-			var obj = $scope.data[tab.name][index];
+		if (tab.methods.delete) {
+			tab.delete = function(index) {
+				// get the object to be deleted
+				var obj = $scope.data[tab.name][index];
 
-			// confirm in a modal that the deletion is really wanted
-			$scope.openModal('Are you sure you want to delete <b>' + tab.getName(obj) + '</b>?',
-				'If you proceed, all data associated with <b>' + tab.getName(obj) + '</b> will be deleted',
-				function() {
-					// delete the object
-					$http.delete('/admin/' + tab.name + '/delete/' + obj._id).then(function(response) {
-						// splice out the deleted object and close the form
-						$scope.data[tab.name].splice(index, 1);
-						$scope['close' + capitalize(tab.name) + 'Form']();
-					}, function() {
-						$scope.error[tab.name] = 'ERROR: ' + response.data.msg;
-					});
-				});
+				// confirm in a modal that the deletion is really wanted
+				$scope.openModal('Are you sure you want to delete <b>' + tab.getName(obj) + '</b>?',
+					'If you proceed, all data associated with <b>' + tab.getName(obj) + '</b> will be deleted',
+					function() {
+						// delete the object
+						$http.delete('/admin/' + tab.name + '/delete/' + obj._id).then(function(response) {
+							// splice out the deleted object and close the form
+							$scope.data[tab.name].splice(index, 1);
+							tab.closeForm();
+						}, function(response) {
+							$scope.error[tab.name] = 'ERROR: ' + response.data.msg;
+						});
+					}
+				);
+			}
+		}
+
+		// a method to listen to the form being submitted
+		// this is used both for creating new data and editing existing data
+		tab.submitForm = function() {
+			// create the object containing all data from the form
+			var obj = {};
+			tab.fields.forEach(function(field, j) {
+				obj[field.name] = $scope.edit[tab.name][field.name];
+			});
+
+			// if there is a creation method and the form is open for creation
+			if (tab.methods.create && $scope.new[tab.name]) {
+				// confirm in a modal that the creation is desired
+				$scope.openModal(tab.methods.create.getTitle(obj),
+					tab.methods.create.getBody(obj), function() {
+						$http.post('/admin/' + tab.name + '/create', obj).then(function(response) {
+							// add the new object to the local array and close the form
+							$scope.data[tab.name].push(response.data[tab.name]);
+							tab.closeForm();
+						}, function(response) {
+							// display the error
+							$scope.error[tab.name] = 'ERROR: ' + response.data.msg;
+						});
+					}
+				);
+			// if there is an edit method and the form is open for editing
+			} else if (tab.methods.edit && $scope.edit[tab.name].active) {
+				// get the original version of the object being edited
+				var original = $scope.data[tab.name][$scope.edit[tab.name].index];
+				// if the edits change the content of the object
+				if ($scope.isEditSubstantive(original, obj)) {
+					// confirm that the edit is desired at the url
+					$scope.openModal(tab.methods.edit.getTitle(obj),
+						tab.methods.edit.getBody(obj), function() {
+							// get the url and post the edit request
+							var url = '/admin/' + tab.name + '/edit/' + original._id;
+							$http.post(url, obj).then(function(response) {
+								// update the local list wih the edit
+								$scope.data[tab.name][$scope.edit[tab.name].index] = response.data[tab.name];
+							}, function(response) {
+								// display any error that occurs
+								$scope.error[tab.name] = 'ERROR: ' + response.data.msg;
+							});
+						}
+					);
+				} else {
+					// note that a substantive edit must be made for an edit to go through
+					$scope.error[tab.name] = 'You must change something about ' + tab.getName(obj) + ' for an edit to occur.';
+				}
+			}
 		}
 	});
 
-	// ---------------------------------------------------- Users
-	// submit the user form to either edit a user or create a user
-	$scope.submitUserForm = function() {
-		if ($scope.new.user) {
-			var user = { name : $scope.edit.user.name, password : $scope.edit.user.password };
-
-			// confirm in a modal that the creation is really wanted
-			$scope.openModal('Are you sure you want to create ' + user.name + '?',
-				'This will create a new account with name ' + user.name + ' and password ' + user.password,
-				function() {
-					// create the user
-					$http.post('admin/user/create', user).then(function(response) {
-						$scope.data.user.push(response.data.user);
-						$scope.closeUserForm();
-					}, function(response) {
-						$scope.error.user = 'ERROR: ' + response.data.msg;
-					});
-				}, $scope.closeUserForm);
-		} else {
-			var original = $scope.data.user[$scope.edit.user.index];
-			var edited = $scope.edit.user;
-			if (original.name !== edited.name || original.password !== edited.password) {
-				// edit the user, submitted the new name and password
-				var user = { name : edited.name, password : edited.password };
-
-				// confirm in a modal that the edit is really wanted
-				$scope.openModal('Are you sure you want to edit ' + user.name + "'s profile?",
-					'This will edit the account to have name ' + user.name + ' and password ' + user.password,
-					function() {
-						// edit the user
-						$http.post('/admin/user/edit/' + original._id, user).then(function(response) {
-							// update the user list locally and close the form
-							$scope.data.user[$scope.edit.user.index] = response.data.user;
-							$scope.closeUserForm();
-						}, function(response) {
-							$scope.error.user = 'ERROR: ' + response.data.msg;
-						});
-					}, $scope.closeUserForm);
-			} else {
-				$scope.error.user = 'ERROR: You must change the name and/or password in order to submit an edit';
+	// ---------------------------------------------------- Helper Function
+	// helper function to determine whether changes have been made
+	$scope.isEditSubstantive = function(original, obj) {
+		for (key in obj) {
+			if (original[key] !== obj[key]) {
+				return true;
 			}
 		}
+		return false;
 	}
 
-	// ---------------------------------------------------- Teams
-	// submit the team form. Currently just adding new teams. TODO: editing
-	$scope.submitTeamForm = function() {
-		if ($scope.new.team) {
-			var team = {
-				school       : $scope.edit.team.school,
-				abbreviation : $scope.edit.team.abbreviation,
-				mascot       : $scope.edit.team.mascot
-			}
-
-			// confirm in a modal that the team creation is really wanted
-			$scope.openModal('Are you sure you want to create ' + team.school + '?',
-				'This will create the ' + team.school + ' ' + team.mascot + ' with abbreviation ' + team.abbreviation,
-				function() {
-					// create the team
-					$http.post('admin/team/create', team).then(function(response) {
-						$scope.data.team.push(response.data.team);
-						$scope.closeTeamForm();
-					}, function(response) {
-						$scope.error.team = 'ERROR: ' + response.data.msg;
-					});
-				}, $scope.closeTeamForm);
-		} else {
-			var original = $scope.data.team[$scope.edit.team.index];
-			var edited = $scope.edit.team;
-			if (original.school !== edited.school || original.abbreviation !== edited.abbreviation || original.mascot !== edited.mascot) {
-				// edit the team, submitted the new data
-				var team = { school : edited.school, abbreviation : edited.abbreviation, mascot: edited.mascot };
-
-				// confirm in a modal that the edit is really wanted
-				$scope.openModal('Are you sure you want to edit the data associated with' + team.school + "?",
-					'This will edit the team to be the ' + team.school + ' ' + team.mascot + ' (' + team.abbreviation + ').',
-					function() {
-						// edit the team
-						$http.post('/admin/team/edit/' + original._id, team).then(function(response) {
-							// update the team list locally and close the form
-							$scope.data.team[$scope.edit.team.index] = response.data.team;
-							$scope.closeTeamForm();
-						}, function(response) {
-							$scope.error.team = 'ERROR: ' + response.data.msg;
-						});
-					}, $scope.closeTeamForm);
-			} else {
-				$scope.error.team = 'ERROR: You must change the school, mascot, and/or abbreviation in order to submit an edit';
-			}
+	// Split at hyphens into separate words, and capitalize each word
+	$scope.capitalize = function(str) {
+		var words = str.split('-')
+		for (var i = 0; i < words.length; i++) {
+			words[i] = words[i][0].toUpperCase() + words[i].slice(1);	
 		}
+		return words.join(' ');
+	}
+
+	// pluralize the passed in string (add an 's' to the end)
+	// this works with current needs but should be more robust
+	$scope.pluralize = function(str) {
+		return str + 's';
 	}
 
 	// ---------------------------------------------------- Modal
