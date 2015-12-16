@@ -17,6 +17,9 @@ html
           ul.nav.nav-tabs.nav-justified
             li(role="presentation", ng-repeat="tab in tabs", ng-class="{ active : currTab === $index }")
               a(href="#", ng-click="setTab($index)", ng-bind="pluralize(capitalize(tab.name))")
+      .row
+        .message(ng-class="{ 'error': error.general, 'message': true }", ng-show="error.general" ng-bind="error.general")
+
       .row(ng-repeat="tab in tabs", ng-show="isActiveTab(tab.name)")
         .col-xs-12.col-sm-8
           h3(ng-bind="pluralize(capitalize(tab.name)) + ' (' + data[tab.name].length + ')'")
@@ -25,15 +28,28 @@ html
               tr
                 th Edit
                 th Delete
-                th(ng-repeat="field in tab.fields", ng-bind="capitalize(field.abbr ? field.abbr : field.name)") 
+                th(ng-repeat="field in tab.fields", ng-click="sortByField(tab, field)")
+                  span.glyphicon(ng-class="getSortGlyphicon(tab, field)")
+                  span(ng-bind="' ' + capitalize(field.abbr ? field.abbr : field.name)")
+                th(ng-repeat="display in tab.displays", ng-bind="capitalize(display.abbr ? display.abbr : display.name)")
             tbody
-              tr(ng-repeat="datum in data[tab.name]", ng-class="{active: tab.isActive()}")
+              tr(ng-repeat="datum in data[tab.name]", ng-class="{active: tab.isActive($index)}")
                 td
-                  a(href="#", ng-click="tab.openEditForm($index)") Edit
+                  button.btn.btn-xs(type="button", ng-click="tab.openEditForm($index)")
+                    span.glyphicon.glyphicon-pencil
+                    span  Edit
                 td
-                  a(href="#", ng-click="tab.delete($index)") Delete
+                  button.btn.btn-xs(type="button", ng-click="tab.delete($index)")
+                    span.glyphicon.glyphicon-trash
+                    span  Delete
                 td(ng-repeat="field in tab.fields" ng-bind="transform(datum[field.name], field.transform)")
-          button.btn.btn-success(type="button", ng-click="tab.openCreateForm()", ng-disabled="tab.isFormOpen()", ng-bind="'New ' + capitalize(tab.name) ")
+                td(ng-repeat="display in tab.displays")
+                  button.btn.btn-xs(type="button", ng-click="display.click(datum)")
+                    span.glyphicon(class="glyphicon-{{ display.glyph }}")
+                    span(ng-bind="' ' + display.text(datum)")
+          button.btn.btn-success(type="button", ng-click="tab.openCreateForm()", ng-disabled="tab.isFormOpen()")
+            span.glyphicon.glyphicon-plus
+            span(ng-bind="' New ' + capitalize(tab.name)")
         .col-xs-12.col-sm-4
           h3(ng-bind="capitalize(tab.name) + ' Form'")
           form(ng-submit="tab.submitForm()")
@@ -45,8 +61,12 @@ html
                 option(ng-repeat="option in field.options()", value="{{ option[field.value] }}", ng-bind="option[field.text]")
               select.form-control(ng-if="field.type && field.type === 'select' && field.multiple", id="{{ tab.name }}Form{{ capitalize(field.name) }}", ng-model="edit[tab.name][field.name]", ng-disabled="!tab.isFormOpen()", multiple)
                 option(ng-repeat="option in field.options()", value="{{ option[field.value] }}", ng-bind="option[field.text]")
-            button.btn.btn-primary(type="submit", ng-disabled="!tab.isFormOpen() || !tab.isFormComplete()") Submit
-            button.btn.btn-danger(type="button", ng-click="tab.closeForm()", ng-disabled="!tab.isFormOpen()") Cancel
+            button.btn.btn-primary(type="submit", ng-disabled="!tab.isFormOpen() || !tab.isFormComplete()")
+              span.glyphicon.glyphicon-ok
+              span  Submit
+            button.btn.btn-danger(type="button", ng-click="tab.closeForm()", ng-disabled="!tab.isFormOpen()")
+              span.glyphicon.glyphicon-remove
+              span  Cancel
           p.error(ng-show="error[tab.name]" ng-bind="error[tab.name]")
 
     // Libraries

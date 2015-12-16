@@ -22,16 +22,20 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 	getName...gets the name of an element of this type
 	methods...object containing the delete, create, and edit method specifications
 		delete....delete an existing piece of data of this type
+			success...a callback to be executed upon a successful deletion request
 		create....create a new piece of data of this type
+			success...a callback to be executed upon a successful creation request
 			getTitle..gets the title of the modal
 			getBody...gets the title of the modal
 		edit......edit an existing piece of data of this type
+			success...a callback to be executed upon a successful edit request
 			getTitle..gets the title of the modal
 			getBody...gets the title of the modal
 	displays..the displays to show in the table that aren't fields
 	[
 		name......the name of the field as given in the Mongoose Schema
-		getter....
+		text......the text to display on the button
+		glyph.....the glyphicon class for the button
 	]
 	*/
 	$scope.tabs = [
@@ -68,8 +72,36 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 				}
 			},
 			displays : [ {
-				name : 'players',
-
+				name  : 'players',
+				text  : function(team) {
+					var numPlayers = team.players.length;
+					return numPlayers + ' player' + (numPlayers === 1 ? '' : 's');
+				},
+				glyph : 'modal-window',
+				// display a list of the players associated with the team
+				click : function(team) {
+					$http.get('/admin/team/' + team._id + '/players').then(function(response) {
+						// construct the header and body of the modal
+						var header = 'The ' + team.school + ' ' + team.mascot;
+						var body;
+						if (response.data.length) {
+							header += ' consist of the following player';
+							header += (response.data.length === 1 ? '' : 's') + ':';
+							var body = '<ul>';
+							for (var i = 0; i < response.data.length; i++) {
+								body += '<li>' + response.data[i].name + '</li>';
+							}
+							body += '<ul>';
+						} else {
+							header += ' have no players.';
+							body = 'Add players in the "Players" tab.';
+						}
+						// open the modal wih only a close option and no responses
+						$scope.openModal(header, body, 'Close');
+					}, function(response) {
+						$scope.error.general = 'ERROR: ' + response.msg;
+					});
+				}
 			} ]
 		},
 		{
@@ -78,16 +110,10 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 				{ name: 'team', type: 'select', options: function() {
 					return $scope.data.team;
 				}, value: '_id', text: 'school', transform: function(_id) {
-					console.log(_id);
-					for (var i = 0; i < $scope.data.team.length; i++) {
-						console.log($scope.data.team[i]._id)
-						console.log($scope.data.team[i]._id === _id);
-						if ($scope.data.team[i]._id === _id) {
-							return $scope.data.team[i].abbreviation;
-						}
-						console.log(_id);
-						return _id;
-					}
+					var i = $scope.search($scope.data.team, function(team) {
+						return team._id === _id;
+					});
+					return i === SENTINAL ? 'None' : $scope.data.team[i].abbreviation;
 				}},
 				{ name: 'number', abbr: '#', type: 'number' },
 				{ name: 'position', abbr: 'pos', type: 'select', options: function() {
@@ -113,10 +139,36 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 				} }, ],
 			getName  : function(player) { return player.name; },
 			methods  : {
-				delete : {},
+				delete : {
+					// remove the deleted player data from the local team data
+					// get the team, then the player, then splice out the player
+					success  : function(player) {
+						if (player.team) {
+							var teamIndex = $scope.search($scope.data.team, function(team) {
+								return team._id === player.team;
+							});
+							if (teamIndex !== SENTINAL) {
+								var playerIndex = $scope.search(
+										$scope.data.team[teamIndex].players, function(p) {
+									return p === player._id;
+								});
+								if (playerIndex !== SENTINAL) {
+									$scope.data.team[teamIndex].players.splice(playerIndex, 1);
+								}
+							}
+						}
+					}
+				},
 				create : {
+					success  : function(player) {
+						// add the new player to the local team data
+						var teamIndex = $scope.search($scope.data.team, function(team) {
+							return team._id === player.team;
+						});
+						$scope.data.team[teamIndex].players.push(player);
+					},
 					getTitle : function(player) { return 'Are you sure you want to create a new player named ' + player.name + '?'; },
-					getBody  : function(player) { return 'This will create a player named ' + player.name + ' on the ' + player.team + ' team.'; },
+					getBody  : function(player) { return 'This will create a player named ' + player.name + ' and add them to the specified team.'; },
 				},
 				edit   : {
 					getTitle : function(player) { return 'Are you sure you want to edit ' + player.name + '?'; },
@@ -127,24 +179,28 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 		}
 	];
 
-	// initialize scope edit, new, error, and data variables
+	// initialize scope edit, new, error, data, and sort variables
 	$scope.edit = {};
 	$scope.new = {};
-	$scope.error = {};
+	$scope.error = { general: null };
 	$scope.data = {};
+	$scope.sort = {};
 
-	for (var i = 0; i < $scope.tabs.length; i++) {
+	$scope.tabs.forEach(function(tab, i) {
 		// initialize the edit variable including blank strings for each field
+		// and sort variable as zero for all fields
 		var edit = { active : false, index  : null };
-		for (var j = 0; j < $scope.tabs[i].fields.length; j++) {
-			edit[$scope.tabs[i].fields[j].name] = '';
-		}
+		$scope.sort[tab.name] = {};
+		tab.fields.forEach(function(field, j) {
+			edit[field.name] = '';
+			$scope.sort[tab.name][field.name] = 0;
+		});
 
 		// set the edit, new, and error variables
-		$scope.edit[$scope.tabs[i].name] = edit;
-		$scope.new[$scope.tabs[i].name] = false;
-		$scope.error[$scope.tabs[i].name] = null;
-	}
+		$scope.edit[tab.name] = edit;
+		$scope.new[tab.name] = false;
+		$scope.error[tab.name] = null;
+	});
 
 	// the current tab, a setter function, and a predicate isActiveTab function
 	$scope.currTab = 0;
@@ -159,7 +215,6 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 	$scope.tabs.forEach(function(tab, i) {
 		// get the list of all data for the data type
 		$http.get('/admin/' + tab.name + '/list').then(function(response) {
-			console.log(response.data);
 			$scope.data[tab.name] = response.data;
 		}, function(response) {
 			$scope.error[tab.name] = 'ERROR: ' + response.data.msg;
@@ -190,15 +245,12 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 		// predicate method for whether the form is complete,
 		// meaning that every input is not empty
 		tab.isFormComplete = function() {
-			for (var i = 0; i < tab.fields.length; i++) {
-				var val = $scope.edit[tab.name][tab.fields[i].name];
-				if (typeof val === 'string' && !val.length ||
+			return $scope.search(tab.fields, function(field) {
+				var val = $scope.edit[tab.name][field.name];
+				 return typeof val === 'string' && !val.length ||
 						typeof val === 'number' && val < 0 ||
-						typeof val === 'object' && (!val || !val.length)) {
-					return false;
-				}
-			}
-			return true;
+						typeof val === 'object' && (!val || !val.length);
+			}) === SENTINAL;
 		}
 
 		// open the form for creating a new object
@@ -230,11 +282,15 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 				// confirm in a modal that the deletion is really wanted
 				$scope.openModal('Are you sure you want to delete <b>' + tab.getName(obj) + '</b>?',
 					'If you proceed, all data associated with <b>' + tab.getName(obj) + '</b> will be deleted',
-					function() {
+					'yes', 'no', function() {
 						// delete the object
 						$http.delete('/admin/' + tab.name + '/delete/' + obj._id).then(function(response) {
 							// splice out the deleted object and close the form
 							$scope.data[tab.name].splice(index, 1);
+							// do anything specified in the tab success callback
+							if (tab.methods.delete.success) {
+								tab.methods.delete.success(obj);
+							}
 							tab.closeForm();
 						}, function(response) {
 							$scope.error[tab.name] = 'ERROR: ' + response.data.msg;
@@ -257,10 +313,14 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 			if (tab.methods.create && $scope.new[tab.name]) {
 				// confirm in a modal that the creation is desired
 				$scope.openModal(tab.methods.create.getTitle(obj),
-					tab.methods.create.getBody(obj), function() {
+					tab.methods.create.getBody(obj), 'yes', 'no', function() {
 						$http.post('/admin/' + tab.name + '/create', obj).then(function(response) {
 							// add the new object to the local array and close the form
 							$scope.data[tab.name].push(response.data[tab.name]);
+							// do anything specified in the tab success callback
+							if (tab.methods.create.success) {
+								tab.methods.create.success(response.data[tab.name]);
+							}
 							tab.closeForm();
 						}, function(response) {
 							// display the error
@@ -276,12 +336,16 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 				if ($scope.isEditSubstantive(original, obj)) {
 					// confirm that the edit is desired at the url
 					$scope.openModal(tab.methods.edit.getTitle(obj),
-						tab.methods.edit.getBody(obj), function() {
+						tab.methods.edit.getBody(obj), 'yes', 'no', function() {
 							// get the url and post the edit request
 							var url = '/admin/' + tab.name + '/edit/' + original._id;
 							$http.post(url, obj).then(function(response) {
 								// update the local list wih the edit
 								$scope.data[tab.name][$scope.edit[tab.name].index] = response.data[tab.name];
+								// do anything specified in the tab success callback
+								if (tab.methods.edit.success) {
+									tab.methods.edit.success(response.data[tab.name]);
+								}
 							}, function(response) {
 								// display any error that occurs
 								$scope.error[tab.name] = 'ERROR: ' + response.data.msg;
@@ -331,7 +395,59 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 		return str + 's';
 	}
 
+	// iterate through array in a search and return the index
+	$scope.search = function(arr, isMatch) {
+		for (var i = 0; i < arr.length; i++) {
+			if (isMatch(arr[i])) {
+				return i;
+			}
+		}
+		return SENTINAL;
+	}
+
+	// sorts the data for a tab by a field so long as editing is not ongoing
+	$scope.sortByField = function(tab, field) {
+		if (!$scope.edit[tab.name].active) {
+			// if first sort ascending, otherwise switch from the previous
+			if (!$scope.sort[tab.name][field.name]) {
+				$scope.sort[tab.name][field.name] = 1;
+			} else {
+				$scope.sort[tab.name][field.name] *= -1;
+			}
+			// reset all other fields in the tab to 0
+			for (var i = 0; i < tab.fields.length; i++) {
+				if (tab.fields[i].name !== field.name) {
+					$scope.sort[tab.name][tab.fields[i].name] = 0;
+				}
+			}
+
+			$scope.data[tab.name].sort(function(a, b) {
+				var a = a[field.name];
+				var b = b[field.name];
+				if (typeof a === 'string') {
+					// ignore case
+					a = a.toUpperCase();
+					b = b.toUpperCase();
+				}
+				if (a < b) return -1 * $scope.sort[tab.name][field.name];
+				if (a > b) return 1 * $scope.sort[tab.name][field.name];
+				return 0;
+			});
+		}
+	}
+
+	// chooses the sort glyphicon based on the tab and field
+	$scope.getSortGlyphicon = function(tab, field) {
+		switch($scope.sort[tab.name][field.name]) {
+			case 1: return 'glyphicon-sort-by-attributes';
+			case -1: return 'glyphicon-sort-by-attributes-alt';
+			default: return 'glyphicon-sort';
+		}
+	}
+
 	// ---------------------------------------------------- Constants
+	var SENTINAL = -1;
+
 	$scope.handedness = [
 		{ value: 0, text: 'Right'},
 		{ value: 1, text: 'Left'},
@@ -352,15 +468,21 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 
 	// ---------------------------------------------------- Modal
 	// a helper to open a modal. The tempalte is made from the header, body and buttons
+	// closeBtn and dismissBtn give the text for each button, if one is to exist at all
 	// cbSuccess and cbFailure are callbacks based on modal selection
-	$scope.openModal = function(header, body, cbSuccess, cbFailure) {
+	$scope.openModal = function(header, body, closeBtn, dismissBtn, cbSuccess, cbFailure) {
 		// construct the template from the arguments
 		template = '';
 		template += '<div class="modal-header"><h3 class="modal-title">' + header + '</h3></div>';
-		template += '<div class="modal-body"><p>' + body + '</p></div>';
+		template += '<div class="modal-body">';
+		// if the body contains a tag paste directly, otherwise wrap in a <p> tag
+		template += (body[0] === '<' ? body : ('<p>' + body + '</p>'));
+		template += '</div>';
 		template += '<div class="modal-footer">';
-		template += '<button class="btn btn-success" type="button" ng-click="yes()">Yes</button>';
-		template += '<button class="btn btn-danger" type="button" ng-click="no()">No</button>';
+		template += '<button class="btn btn-success" type="button" ng-click="close()">' + (closeBtn || 'close') + '</button>';
+		if (dismissBtn) {
+			template += '<button class="btn btn-danger" type="button" ng-click="dismiss()">' + dismissBtn + '</button>';
+		}
 		template += '</div>';
 
 		var modalInstance = $uibModal.open({
@@ -376,6 +498,6 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 
 // the modal controller, which simply takes either a 'yes' or 'no' and sends the proper response
 angular.module('ptAdminApp').controller('ModalInstanceCtrl', function ($scope, $uibModalInstance) {
-	$scope.yes = function () { $uibModalInstance.close(); }
-	$scope.no = function () { $uibModalInstance.dismiss(); }
+	$scope.close = function () { $uibModalInstance.close(); }
+	$scope.dismiss = function () { $uibModalInstance.dismiss(); }
 });

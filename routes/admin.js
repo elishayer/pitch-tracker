@@ -85,6 +85,37 @@ router.get('/team/list', function(req, res, next) {
 	});
 });
 
+/* GET all players associated with a team. */
+router.get('/team/:id/players', function(req, res, next) {
+	req.models.Team.findById(req.params.id, function(err, team) {
+		if (err) {
+			res.status(STATUS_ERROR).send({ msg: err });
+		} else {
+			// if no players, return an empty array
+			if (!team.players.length) {
+				res.status(STATUS_OK).send([]);
+			}
+			
+			var players = [];
+			// for each player find the data associated with their _id
+			for (var i = 0; i < team.players.length; i++) {
+				req.models.Player.findById(team.players[i], function(err, player) {
+					if (err) {
+						res.status(STATUS_ERROR).send({ msg: err });
+					} else {
+						// add the player to the array and return if all player data is found
+						players.push(player);
+						if (players.length === team.players.length) {
+							// return the array of player data
+							res.status(STATUS_OK).send(players);
+						}
+					}
+				});
+			}
+		}
+	});
+});
+
 /* POST a new team. */
 router.post('/team/create', function(req, res, next) {
 	// only one team for each school or abbreviation
