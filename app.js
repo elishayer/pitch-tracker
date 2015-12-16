@@ -10,9 +10,6 @@ var bodyParser = require('body-parser');
 var mongo = require('mongodb');
 var mongoose = require('mongoose');
 
-// object to hold the models
-var models = {};
-
 // connect to the mongodb database
 mongoose.connect('mongodb://localhost:27017/pitch-tracker');
 

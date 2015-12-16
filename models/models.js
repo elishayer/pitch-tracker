@@ -22,11 +22,8 @@ var PlayerSchema = new mongoose.Schema({
 	position     : [String],
 	height       : Number,
 	weight       : Number,
-	year         : String,
-	major        : String,
-	hometown     : String,
-	batHand      : String,
-	throwHand    : String
+	'bat-hand'   : Number,
+	'throw-hand' : Number
 });
 
 var Player = mongoose.model('Player', PlayerSchema);

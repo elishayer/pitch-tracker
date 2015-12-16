@@ -17,7 +17,7 @@ html
           ul.nav.nav-tabs.nav-justified
             li(role="presentation", ng-repeat="tab in tabs", ng-class="{ active : currTab === $index }")
               a(href="#", ng-click="setTab($index)", ng-bind="pluralize(capitalize(tab.name))")
-      .row(ng-repeat="tab in tabs", ng-show="isActiveTab('{{ tab.name }}')")
+      .row(ng-repeat="tab in tabs", ng-show="isActiveTab(tab.name)")
         .col-xs-12.col-sm-8
           h3(ng-bind="pluralize(capitalize(tab.name)) + ' (' + data[tab.name].length + ')'")
           table.table
@@ -25,14 +25,14 @@ html
               tr
                 th Edit
                 th Delete
-                th(ng-repeat="field in tab.fields", ng-bind="capitalize(field.abbr)") 
+                th(ng-repeat="field in tab.fields", ng-bind="capitalize(field.abbr ? field.abbr : field.name)") 
             tbody
               tr(ng-repeat="datum in data[tab.name]", ng-class="{active: tab.isActive()}")
                 td
                   a(href="#", ng-click="tab.openEditForm($index)") Edit
                 td
                   a(href="#", ng-click="tab.delete($index)") Delete
-                td(ng-repeat="field in tab.fields" ng-bind="datum[field.name]")
+                td(ng-repeat="field in tab.fields" ng-bind="transform(datum[field.name], field.transform)")
           button.btn.btn-success(type="button", ng-click="tab.openCreateForm()", ng-disabled="tab.isFormOpen()", ng-bind="'New ' + capitalize(tab.name) ")
         .col-xs-12.col-sm-4
           h3(ng-bind="capitalize(tab.name) + ' Form'")
@@ -40,9 +40,11 @@ html
             .form-group(ng-repeat="field in tab.fields")
               label(for="{{ tab.name }}Form{{ capitalize(field.name) }}", ng-bind="capitalize(field.name)")
               input.form-control(ng-if="!field.type || field.type !== 'select'", id="{{ tab.name }}Form{{ capitalize(field.name) }}", type="{{ field.type ? field.type : 'text' }}", placeholder="{{ capitalize(field.name) }}", ng-model="edit[tab.name][field.name]", ng-disabled="!tab.isFormOpen()")
-              select.form-control(ng-if="field.type && field.type === 'select'", id="{{ tab.name }}Form{{ capitalize(field.name) }}", ng-model="edit[tab.name][field.name]", ng-disabled="!tab.isFormOpen()")
-                option(value="", disabled, selected, hidden, ng-bind="'Please Choose a ' + capitalize(field.name)")
-                option(ng-repeat="datum in data[field.name]", value="{{ datum._id }}", ng-bind="datum.school")
+              select.form-control(ng-if="field.type && field.type === 'select' && !field.multiple", id="{{ tab.name }}Form{{ capitalize(field.name) }}", ng-model="edit[tab.name][field.name]", ng-disabled="!tab.isFormOpen()")
+                option(value='', disabled, selected, hidden, ng-bind="'Please Choose a ' + capitalize(field.name)")
+                option(ng-repeat="option in field.options()", value="{{ option[field.value] }}", ng-bind="option[field.text]")
+              select.form-control(ng-if="field.type && field.type === 'select' && field.multiple", id="{{ tab.name }}Form{{ capitalize(field.name) }}", ng-model="edit[tab.name][field.name]", ng-disabled="!tab.isFormOpen()", multiple)
+                option(ng-repeat="option in field.options()", value="{{ option[field.value] }}", ng-bind="option[field.text]")
             button.btn.btn-primary(type="submit", ng-disabled="!tab.isFormOpen() || !tab.isFormComplete()") Submit
             button.btn.btn-danger(type="button", ng-click="tab.closeForm()", ng-disabled="!tab.isFormOpen()") Cancel
           p.error(ng-show="error[tab.name]" ng-bind="error[tab.name]")

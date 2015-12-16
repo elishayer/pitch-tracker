@@ -149,4 +149,45 @@ router.get('/player/list', function(req, res, next) {
 	});
 });
 
+/* POST a new player. */
+router.post('/player/create', function(req, res, next) {
+	new req.models.Player(req.body).save(function(err, player) {
+		if (err) {
+			res.status(STATUS_ERROR).send({ msg: err });
+		} else {
+			// push the new player into the players list of their team
+			var update = { $push: { 'players' : player } };
+			req.models.Team.findByIdAndUpdate(player.team, update, function(err, team) {
+				if (err) {
+					res.status(STATUS_ERROR).send({ msg: err });
+				}
+			});
+
+			res.status(STATUS_OK).send({
+				msg    : '',
+				player : player
+			});
+		}
+	});
+});
+
+/* DELETE a player */
+router.delete('/player/delete/:id', function(req, res, next) {
+	req.models.Player.findByIdAndRemove(req.params.id, function(err, player) {
+		if (err) {
+			res.status(STATUS_ERROR).send({ msg: err });
+		} else {
+			// pull the deleted player from the players list of their team
+			var update = { $pull: { 'players' : player._id } };
+			req.models.Team.findByIdAndUpdate(player.team, update, function(err, team) {
+				if (err) {
+					res.status(STATUS_ERROR).send({ msg: err });
+				}
+			});
+
+			res.status(STATUS_OK).send('Successfully deleted ' + player.name);
+		}
+	});
+});
+
 module.exports = router;

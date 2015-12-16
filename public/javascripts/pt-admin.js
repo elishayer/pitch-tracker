@@ -5,13 +5,41 @@
  */
 
 angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', function($scope, $http, $uibModal) {
-	// constants
+	// ---------------------------------------------------- Tab Data
+	/* The following describes the contents of the following data:
+	name......the singular, lowercase tab name, which also gives the data type
+	fields....the fields in an element of the data type, corresponding to the Mongoose model
+	[
+		name......the name of the field as given in the Mongoose Schema
+		abbr......the text to display in the table header (optional, default is name)
+		type......the input type, or select for a dropdown (optional, default is 'text')
+		options...if type is select, a callback returning the data for the options
+		value.....if type is select, the key to get the value from the option data
+		text......if type is select, the key to get the text to display from the option data
+		multiple..if type is select, whether to choose multiple inputs (optional, default is false)
+		transform.a callback to display the text (optional, default is the identity function)
+	]
+	getName...gets the name of an element of this type
+	methods...object containing the delete, create, and edit method specifications
+		delete....delete an existing piece of data of this type
+		create....create a new piece of data of this type
+			getTitle..gets the title of the modal
+			getBody...gets the title of the modal
+		edit......edit an existing piece of data of this type
+			getTitle..gets the title of the modal
+			getBody...gets the title of the modal
+	displays..the displays to show in the table that aren't fields
+	[
+		name......the name of the field as given in the Mongoose Schema
+		getter....
+	]
+	*/
 	$scope.tabs = [
 		{
-			name    : 'user',
-			fields  : [ { name: 'name', abbr: 'name' }, { name: 'password', abbr: 'password'} ],
-			getName : function(user) { return user.name; },
-			methods : {
+			name     : 'user',
+			fields   : [ { name: 'name' }, { name: 'password' } ],
+			getName  : function(user) { return user.name; },
+			methods  : {
 				delete : {},
 				create : {
 					getTitle : function(user) { return 'Are you sure you want to create a new user named ' + user.name + '?'; },
@@ -21,14 +49,14 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 					getTitle : function(user) { return 'Are you sure you want to edit ' + user.name + "'s account?"; },
 					getBody  : function(user) { return 'This will change the account information associated with ' + user.name + '.'; }
 				}
-			}
+			},
+			displays : []
 		},
 		{
-			name    : 'team',
-			fields  : [ { name: 'school', abbr: 'school' }, { name: 'mascot', abbr: 'mascot' },
-			 	{ name: 'abbreviation', abbr: 'abbreviation'} ],
-			getName : function(team) { return 'the ' + team.school + ' ' + team.mascot; },
-			methods : {
+			name     : 'team',
+			fields   : [ { name: 'school' }, { name: 'mascot' }, { name: 'abbreviation' } ],
+			getName  : function(team) { return 'the ' + team.school + ' ' + team.mascot; },
+			methods  : {
 				delete : {},
 				create : {
 					getTitle : function(team) { return 'Are you sure you want to create a new team called the ' + team.school + ' ' + team.mascot + '?'; },
@@ -38,17 +66,53 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 					getTitle : function(team) { return 'Are you sure you want to edit ' + team.school + '?'; },
 					getBody  : function(team) { return 'This will change the information associated with ' + team.school + '.'; }
 				}
-			}
+			},
+			displays : [ {
+				name : 'players',
+
+			} ]
 		},
 		{
-			name    : 'player',
-			fields  : [ {name: 'name', abbr: 'name' }, {name: 'team', abbr: 'team', type: 'select' },
-				{ name: 'number', abbr: '#', type: 'number' }, { name: 'position', abbr: 'pos' },
-				{ name: 'height', abbr: 'h' }, { name: 'weight', abbr: 'w', type: 'number' },
-				{ name: 'year', abbr: 'year'}, { name: 'bat-hand', abbr: 'bat'},
-				{ name: 'throw-hand', abbr: 'throw' } ],
-			getName : function(player) { return player.name; },
-			methods : {
+			name     : 'player',
+			fields   : [ {name: 'name' },
+				{ name: 'team', type: 'select', options: function() {
+					return $scope.data.team;
+				}, value: '_id', text: 'school', transform: function(_id) {
+					console.log(_id);
+					for (var i = 0; i < $scope.data.team.length; i++) {
+						console.log($scope.data.team[i]._id)
+						console.log($scope.data.team[i]._id === _id);
+						if ($scope.data.team[i]._id === _id) {
+							return $scope.data.team[i].abbreviation;
+						}
+						console.log(_id);
+						return _id;
+					}
+				}},
+				{ name: 'number', abbr: '#', type: 'number' },
+				{ name: 'position', abbr: 'pos', type: 'select', options: function() {
+					return $scope.positions;
+				}, value: 'value', text: 'text', multiple: true, transform: function(pos) {
+					return $scope.positions[pos - 1].abbr;
+				} },
+				{ name: 'height', abbr: 'h', type: 'number', transform: function(height) {
+					var feet = Math.floor(height / 12);
+					var inches = height - 12 * feet;
+					return feet + "'" + inches + '"';
+				} },
+				{ name: 'weight', abbr: 'w', type: 'number' },
+				{ name: 'bat-hand', abbr: 'bat', type: 'select', options: function() {
+					return $scope.handedness;
+				}, value: 'value', text: 'text', transform: function(hand) {
+					return $scope.handedness[hand].text[0];
+				} },
+				{ name: 'throw-hand', abbr: 'throw', type: 'select', options: function() {
+					return $scope.handedness;
+				}, value: 'value', text: 'text', transform: function(hand) {
+					return $scope.handedness[hand].text[0];
+				} }, ],
+			getName  : function(player) { return player.name; },
+			methods  : {
 				delete : {},
 				create : {
 					getTitle : function(player) { return 'Are you sure you want to create a new player named ' + player.name + '?'; },
@@ -58,7 +122,8 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 					getTitle : function(player) { return 'Are you sure you want to edit ' + player.name + '?'; },
 					getBody  : function(player) { return 'This will change the data associated with ' + player.name + '.'; }
 				}
-			}
+			},
+			displays : []
 		}
 	];
 
@@ -94,6 +159,7 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 	$scope.tabs.forEach(function(tab, i) {
 		// get the list of all data for the data type
 		$http.get('/admin/' + tab.name + '/list').then(function(response) {
+			console.log(response.data);
 			$scope.data[tab.name] = response.data;
 		}, function(response) {
 			$scope.error[tab.name] = 'ERROR: ' + response.data.msg;
@@ -125,7 +191,10 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 		// meaning that every input is not empty
 		tab.isFormComplete = function() {
 			for (var i = 0; i < tab.fields.length; i++) {
-				if (!$scope.edit[tab.name][tab.fields[i].name].length) {
+				var val = $scope.edit[tab.name][tab.fields[i].name];
+				if (typeof val === 'string' && !val.length ||
+						typeof val === 'number' && val < 0 ||
+						typeof val === 'object' && (!val || !val.length)) {
 					return false;
 				}
 			}
@@ -238,6 +307,15 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 		return false;
 	}
 
+	// transforms the input based on callback, else the identity function
+	$scope.transform = function(str, transform) {
+		if (transform) {
+			return transform(str);
+		} else {
+			return str;
+		}
+	}
+
 	// Split at hyphens into separate words, and capitalize each word
 	$scope.capitalize = function(str) {
 		var words = str.split('-')
@@ -252,6 +330,25 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 	$scope.pluralize = function(str) {
 		return str + 's';
 	}
+
+	// ---------------------------------------------------- Constants
+	$scope.handedness = [
+		{ value: 0, text: 'Right'},
+		{ value: 1, text: 'Left'},
+		{ value: 2, text: 'Switch'}
+	];
+
+	$scope.positions = [
+		{ value: 1, text: 'Pitcher', abbr: 'P' },
+		{ value: 2, text: 'Catcher', abbr: 'C' },
+		{ value: 3, text: 'First Baseman', abbr: '1B' },
+		{ value: 4, text: 'Second Baseman', abbr: '2B' },
+		{ value: 5, text: 'Third Baseman', abbr: '3B' },
+		{ value: 6, text: 'Short Stop', abbr: 'SS' },
+		{ value: 7, text: 'Left Fielder', abbr: 'LF' },
+		{ value: 8, text: 'Center Fielder', abbr: 'CF' },
+		{ value: 9, text: 'Right Fielder', abbr: 'RF' },
+	];
 
 	// ---------------------------------------------------- Modal
 	// a helper to open a modal. The tempalte is made from the header, body and buttons
