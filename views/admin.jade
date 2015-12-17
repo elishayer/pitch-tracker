@@ -16,7 +16,7 @@ html
         .col-xs-12
           ul.nav.nav-tabs.nav-justified
             li(role="presentation", ng-repeat="tab in tabs", ng-class="{ active : currTab === $index }")
-              a(href="#", ng-click="setTab($index)", ng-bind="pluralize(capitalize(tab.name))")
+              a(ng-click="setTab($index)", ng-bind="pluralize(capitalize(tab.name))")
       .row
         .message(ng-class="{ 'error': error.general, 'message': true }", ng-show="error.general" ng-bind="error.general")
 

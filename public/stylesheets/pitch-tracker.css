@@ -80,3 +80,8 @@ circle.balls {
 circle.outs {
 	fill : blue;
 }
+
+/* Admin tabs */
+.nav-tabs>li>a {
+	cursor: pointer;
+}
