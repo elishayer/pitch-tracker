@@ -48,7 +48,7 @@ var SessionSchema = new mongoose.Schema({
 		home         : mongoose.Schema.Types.ObjectId,
 		away         : mongoose.Schema.Types.ObjectId
 	},
-	innings      : [mongoose.Schema.Types.ObjectId]
+	pas          : [mongoose.Schema.Types.ObjectId]
 });
 
 var Session = mongoose.model('Session', SessionSchema);
@@ -57,7 +57,7 @@ var Session = mongoose.model('Session', SessionSchema);
 var UserSchema = new mongoose.Schema({
 	name         : String,
 	password     : String,
-	//sessions     : [mongoose.Schema.Types.ObjectId]
+	sessions     : [mongoose.Schema.Types.ObjectId]
 });
 
 var User = mongoose.model('User', UserSchema);

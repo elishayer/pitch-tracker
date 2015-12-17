@@ -67,6 +67,12 @@ html
             button.btn.btn-danger(type="button", ng-click="tab.closeForm()", ng-disabled="!tab.isFormOpen()")
               span.glyphicon.glyphicon-remove
               span  Cancel
+          .form(ng-repeat="form in tab.forms")
+            h3(ng-bind="capitalize(form.title)")
+            form(ng-submit="form.submit(tab)")
+              .form-group
+                input.form-control(ng-repeat="input in form.inputs", id="{{ input.id }}", type="{{ input.type }}")
+                button.btn.btn-default(role="submit") Submit
           p.error(ng-show="error[tab.name]" ng-bind="error[tab.name]")
 
     // Libraries

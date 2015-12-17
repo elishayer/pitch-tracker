@@ -1,9 +1,38 @@
 var express = require('express');
 var router = express.Router();
+var parser = require('fast-csv');
 
 // ---------------------------------------- Constants
 var STATUS_OK = 200;
 var STATUS_ERROR = 500;
+
+// a map from handedness to numerical entry
+var HANDEDNESS_MAP = {
+	r : 0,
+	l : 1,
+	s : 2
+}
+
+// a map from position to numerical entry
+var POSITION_MAP = {
+	'p'   : 1,
+	'lhp' : 1,
+	'rhp' : 1,
+	'c'   : 2,
+	'1b'  : 3,
+	'2b'  : 4,
+	'3b'  : 5,
+	'ss'  : 6,
+	'lf'  : 7,
+	'cf'  : 8,
+	'rf'  : 9,
+	'inf' : 10,
+	'of'  : 11
+}
+
+// the fields of the player schema required for the roster upload
+var ROSTER_FIELDS = ['name', 'number', 'position',
+	'height', 'weight', 'bat-hand', 'throw-hand' ];
 
 // ---------------------------------------- Render
 /* GET admin page. */
@@ -95,7 +124,7 @@ router.get('/team/:id/players', function(req, res, next) {
 			if (!team.players.length) {
 				res.status(STATUS_OK).send([]);
 			}
-			
+
 			var players = [];
 			// for each player find the data associated with their _id
 			for (var i = 0; i < team.players.length; i++) {
@@ -141,6 +170,65 @@ router.post('/team/create', function(req, res, next) {
 	});
 });
 
+/* POST a full team roster. */
+router.post('/team/roster/:id', function(req, res, next) {
+	var numPlayers = 0;
+	var players = [];
+	parser.fromString(req.body.data, {headers: true})
+		.validate(function(data) {
+			for (var i = 0; i < ROSTER_FIELDS.length; i++) {
+				if (!data.hasOwnProperty(req.body.headers[ROSTER_FIELDS[i]])) {
+					return false;
+				}
+			}
+			return true;
+		}).on('data-invalid', function(data) {
+			res.status(STATUS_ERROR).send({
+				msg : 'A .csv header was given incorrectly.'
+			});
+		}).on('data', function(data) {
+			numPlayers++;
+			var player = { team : req.params.id };
+			for (var i = 0; i < ROSTER_FIELDS.length; i++) {
+				player[ROSTER_FIELDS[i]] = data[req.body.headers[ROSTER_FIELDS[i]]];
+			}
+
+			// map from textual data to numerical data for handedness, position, and height
+			player['bat-hand'] = HANDEDNESS_MAP[player['bat-hand'][0].toLowerCase()];
+			player['throw-hand'] = HANDEDNESS_MAP[player['throw-hand'][0].toLowerCase()];
+			player['position'] = player['position'].split('/');
+			for (var i = 0; i < player['position'].length; i++) {
+				player['position'][i] = POSITION_MAP[player['position'][i].toLowerCase()];
+			}
+			// 12 times the number of feet plus the number of inches,
+			// under the assumption of height in the form "5-10" or "5'10" 
+			player['height'] = parseInt(player['height'].match(/^\d/)) * 12 +
+				parseInt(player['height'].match(/\d*$/));
+			// save the player to the database
+			new req.models.Player(player).save(function(err, player) {
+				if (err) {
+					res.status(STATUS_ERROR).send({ msg: err });
+				} else {
+					// push the new player into the players list of their team
+					var update = { $push: { 'players' : player } };
+					req.models.Team.findByIdAndUpdate(player.team, update, function(err, team) {
+						if (err) {
+							res.status(STATUS_ERROR).send({ msg: err });
+						} else {
+							players.push(player);
+							if (players.length === numPlayers) {
+								res.status(STATUS_OK).send({
+									msg     : 'roster successfully uploaded',
+									players : players
+								});
+							}
+						}
+					});
+				}
+			});
+		});
+});
+
 /* POST a team edit. */
 router.post('/team/edit/:id', function(req, res, next) {
 	var update = { $set : { school : req.body.school, mascot : req.body.mascot, abbreviation : req.body.abbreviation } };
@@ -162,7 +250,22 @@ router.delete('/team/delete/:id', function(req, res, next) {
 		if (err) {
 			res.status(STATUS_ERROR).send({ msg: err });
 		} else {
-			res.status(STATUS_OK).send('Successfully deleted ' + team.school);
+			if (!team.players.length) {
+				res.status(STATUS_OK).send('Successfully deleted ' + team.school);
+			}
+
+			// delete all references to this team in each of its players
+			var countDeleted = 0;
+			var update = { $unset: { team: '' }};
+			for (var i = 0; i < team.players.length; i++) {
+				req.models.Player.findByIdAndUpdate(team.players[i], update, function(err, player) {
+					if (err) {
+						res.status(STATUS_ERROR).send({ msg: err });
+					} else if (++countDeleted === team.players.length) {
+						res.status(STATUS_OK).send('Successfully deleted ' + team.school);
+					}
+				});
+			}
 		}
 	});
 });
@@ -200,6 +303,38 @@ router.post('/player/create', function(req, res, next) {
 			});
 		}
 	});
+});
+
+/* DELETE all players */
+router.delete('/player/delete/all', function(req, res, next) {
+	req.models.Player.remove({}, function(err, players) {
+		if (err) {
+			res.status(STATUS_ERROR).send({ msg: err });
+		} else {
+			// remove players from all teams
+			req.models.Team.find({}, function(err, teams) {
+				var count = 0;
+				if (err) {
+					res.status(STATUS_ERROR).send({ msg: err });
+				} else {
+					// set the players array to empty in each team
+					var update = { $set : { 'players' : [] } };
+					for (var i = 0; i < teams.length; i++) {
+						req.models.Team.findByIdAndUpdate(teams[i]._id, update, function(err, team) {
+							if (err) {
+								res.status(STATUS_ERROR).send({ msg: err });
+							} else {
+								if (++count === teams.length) {
+									res.status(STATUS_OK).send({ msg: 'All players have been deleted' });
+								}
+							}
+						});
+					}
+				}
+			});
+		}
+	});
+
 });
 
 /* DELETE a player */
