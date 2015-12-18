@@ -334,7 +334,21 @@ router.delete('/player/delete/all', function(req, res, next) {
 			});
 		}
 	});
+});
 
+/* POST a player edit. */
+router.post('/player/edit/:id', function(req, res, next) {
+	var update = { $set : req.body };
+	req.models.Player.findByIdAndUpdate(req.params.id, update, function(err, player) {
+		if (err) {
+			res.status(STATUS_ERROR).send({ msg: err });
+		} else {
+			res.status(STATUS_OK).send({
+				msg    : '',
+				player : player
+			});
+		}
+	});
 });
 
 /* DELETE a player */
