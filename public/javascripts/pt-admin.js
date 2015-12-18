@@ -40,6 +40,10 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 			id........the id of the input
 		]
 		submit....the submission callback
+		btn.......data related to the submit button
+			class.....the class of the button
+			text......the text on the button
+			glyph.....the glyphicon class of the button
 	]
 	displays..the displays to show in the table that aren't fields
 	[
@@ -64,8 +68,6 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 					body  : ['This will change the account information associated with ', 'data.name', '.']
 				}
 			},
-			forms    : [],
-			displays : []
 		},
 		{
 			name     : 'team',
@@ -82,7 +84,6 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 					body  : ['This will change the information associated with ', 'data.school', '.']
 				}
 			},
-			forms    : [],
 			displays : [ {
 				name  : 'players',
 				text  : function(team) {
@@ -258,11 +259,15 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 								}
 							);
 						}
+					},
+					button : {
+						class : 'btn-success',
+						text  : 'Upload',
+						glyph : 'upload'
 					}
 				},
 				{
 					title  : 'delete-all-players',
-					inputs : [],
 					submit : function(tab) {
 						// confirm in a modal that the deletion is desired
 						$scope.openModal('Are you sure you want to delete all players?',
@@ -282,10 +287,14 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 								);
 							}
 						);
+					},
+					button : {
+						class : 'btn-warning',
+						text  : 'Delete All',
+						glyph : 'warning-sign'
 					}
 				}
 			],
-			displays : []
 		}
 	];
 
@@ -476,6 +485,9 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 	// helper function to determine whether changes have been made
 	$scope.isEditSubstantive = function(original, obj) {
 		for (key in obj) {
+			if (Object.keys(obj).length > 3) {
+				console.log([key, original[key], obj[key]]);
+			}
 			if (original[key] !== obj[key]) {
 				return true;
 			}

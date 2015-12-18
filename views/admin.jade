@@ -72,7 +72,9 @@ html
             form(ng-submit="form.submit(tab)")
               .form-group
                 input.form-control(ng-repeat="input in form.inputs", id="{{ input.id }}", type="{{ input.type }}")
-                button.btn.btn-default(role="submit") Submit
+              button.btn(role="submit", class="{{ form.button.class }}")
+                span.glyphicon(class="{{ 'glyphicon-' + form.button.glyph }}")
+                span(ng-bind="' ' + form.button.text")
           p.error(ng-show="error[tab.name]" ng-bind="error[tab.name]")
 
     // Libraries
