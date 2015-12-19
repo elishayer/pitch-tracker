@@ -277,7 +277,7 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 										$http.delete('/admin/player/delete/all').then(function(response) {
 											// remove all players locally
 											$scope.data.player = [];
-											$scope.data.team.forEach(function(i, team) {
+											$scope.data.team.forEach(function() {
 												team.players = [];
 											});
 										}, function(response) {
@@ -295,7 +295,7 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 					}
 				}
 			],
-		}
+		},
 	];
 
 	// initialize scope edit, new, error, data, and sort variables
@@ -305,12 +305,12 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 	$scope.data = {};
 	$scope.sort = {};
 
-	$scope.tabs.forEach(function(tab, i) {
+	$scope.tabs.forEach(function(tab) {
 		// initialize the edit variable including blank strings for each field
 		// and sort variable as zero for all fields
 		var edit = { active : false, index  : null };
 		$scope.sort[tab.name] = {};
-		tab.fields.forEach(function(field, j) {
+		tab.fields.forEach(function(field) {
 			edit[field.name] = '';
 			$scope.sort[tab.name][field.name] = 0;
 		});
@@ -331,7 +331,7 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 	}
 
 	// ---------------------------------------------------- Initialize
-	$scope.tabs.forEach(function(tab, i) {
+	$scope.tabs.forEach(function(tab) {
 		// get the list of all data for the data type
 		$http.get('/admin/' + tab.name + '/list').then(function(response) {
 			$scope.data[tab.name] = response.data;
@@ -342,7 +342,7 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 
 	// ---------------------------------------------------- Model types
 	// create the methods that apply to each tab, and add them to the tab object
-	$scope.tabs.forEach(function(tab, i) {
+	$scope.tabs.forEach(function(tab) {
 		// open the form for editing an existing object
 		tab.openEditForm = function(index) {
 			// get object information
@@ -351,7 +351,7 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 			// set the edit information
 			$scope.edit[tab.name].active = true;
 			$scope.edit[tab.name].index = index;
-			tab.fields.forEach(function(field, j) {
+			tab.fields.forEach(function(field) {
 				$scope.edit[tab.name][field.name] = obj[field.name];
 			});
 		}
@@ -381,7 +381,7 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 		tab.closeForm = function() {
 			$scope.edit[tab.name].active = false;
 			$scope.edit[tab.name].index = null;
-			tab.fields.forEach(function(field, j) {
+			tab.fields.forEach(function(field) {
 				$scope.edit[tab.name][field.name] = '';
 			});
 			$scope.new[tab.name] = false;
@@ -424,7 +424,7 @@ angular.module('ptAdminApp', ['ui.bootstrap']).controller('PTAdminController', f
 		tab.submitForm = function() {
 			// create the object containing all data from the form, push to the modal
 			var obj = {};
-			tab.fields.forEach(function(field, j) {
+			tab.fields.forEach(function(field) {
 				obj[field.name] = $scope.edit[tab.name][field.name];
 			});
 			$scope.modal = obj;

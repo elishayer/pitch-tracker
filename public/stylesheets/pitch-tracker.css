@@ -59,6 +59,10 @@ th {
 	font-weight: bold;
 }
 
+.hole-select {
+	width: auto;
+}
+
 /* ----- Bases ----- */
 path.occupied {
 	fill : #ff0000;

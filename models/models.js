@@ -64,7 +64,7 @@ var User = mongoose.model('User', UserSchema);
 
 // ---------------------------------------- Plate Appearance
 var PASchema = new mongoose.Schema({
-	game         : mongoose.Schema.Types.ObjectId,
+	session      : mongoose.Schema.Types.ObjectId,
 	hitter       : String, //mongoose.Schema.Types.ObjectId,
 	pitcher      : String, //mongoose.Schema.Types.ObjectId,
 	pitches      : [mongoose.Schema.Types.ObjectId],

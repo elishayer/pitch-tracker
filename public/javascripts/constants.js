@@ -127,12 +127,36 @@ var SIGN_IN = 0;
 var CREATE_ACCOUNT = 1;
 var GUEST_USER = 2;
 
-// app view constants
-var LOGIN = 0;
-var SESSION = 1;
-var INPUT = 2;
-
 // session type constants
 var GAME = 0;
 var PRACTICE = 1;
 var BULLPEN = 2;
+
+// position constants
+// a map from position to numerical entry
+var NUMBER_TO_POSITON = {
+	1 : 'P',
+	2 : 'C',
+	3 : '1B',
+	4 : '2B',
+	5 : '3B',
+	6 : 'SS',
+	7 : 'LF',
+	8 : 'CF',
+	9 : 'RF',
+	10: 'INF',
+	11: 'OF',
+}
+var POSITION_TO_NUMBER = {
+	'P'  : 1,
+	'C'  : 2,
+	'1B' : 3,
+	'2B' : 4,
+	'3B' : 5,
+	'SS' : 6,
+	'LF' : 7,
+	'CF' : 8,
+	'RF' : 9,
+	'INF': 10,
+	'OF' : 11
+}

@@ -7,7 +7,7 @@ html
     link(rel='stylesheet', href='/stylesheets/bootstrap.min.css')
     link(rel='stylesheet', href='/stylesheets/pitch-tracker.css')
 
-  body(ng-app='ptApp', ng-controller='PitchTrackerController as ptAng')
+  body(ng-app='ptApp', ng-controller='ptController as ptAng')
     // Navigation bar
     nav.navbar.navbar-default
       .container-fluid
@@ -32,46 +32,58 @@ html
 
           ul.nav.navbar-nav.navbar-right
             li(ng-show="user.name.length")
-              button.btn.btn-default(role='button') Welcome, {{ user.name }}
-            li(ng-hide="user.name.length")
-              button.btn.btn-primary(role='button', ng-click='accountAction(0)') Sign in
-            li(ng-hide="user.name.length")
-              button.btn.btn-success(role="button", ng-click='accountAction(1)') Create Account
-
+              a(role='button') Welcome, {{ user.name }}
 
     .container
       // TITLE
       h1#title Pitch Tracker
 
-      #user(ng-show='view === 0')
-        .row
-          .col-xs-4.col-xs-offset-4
-            #user(ng-show='!user.name.length && accountFormType !== 0 && accountFormType !== 1')
-              p Sign in, create an account, or log as a guest
-              button.btn.btn-primary.btn-lg.btn-block(type='button', ng-click='accountAction(0)') Sign in
-              button.btn.btn-success.btn-lg.btn-block(type='button', ng-click='accountAction(1)') Create Account
-              button.btn.btn-warning.btn-lg.btn-block(type='button', ng-click='accountAction(2)') Guest User
-            #accountForm(ng-show='accountFormType === 0 || accountFormType === 1')
-              h3(ng-bind='accountFormHeader()')
-              form(ng-submit='accountFormSubmit()')
-                .form-group
-                  label(for='accountFormName') Name
-                  input.form-control#accountFormName(type='text', placeholder='Name', ng-model='accountFormName')
-                .form-group
-                  label(for="accountFormPassword") Password
-                  input.form-control#accountFormPassword(type="password", placeholder="Password", ng-model="accountFormPassword")
-                button.btn.btn-primary(type="submit" ng-disabled="!accountFormName.length || !accountFormPassword.length") Submit
-              p.error(ng-show="userLoginError" ng-bind="userLoginError")
-      #session(ng-show='view === 1')
-        .row
-          .col-xs-4.col-xs-offset-4
-            p Hi {{ user.name }}, please select the session type:
-            form(ng-submit="initiateSession()")
-              button.btn.btn-primary.btn-lg.btn-block(type="button", ng-click="setSessionType(0)") Game
-              button.btn.btn-primary.btn-lg.btn-block(type="button", ng-click="setSessionType(1)") Practice (Pitchers and Hitters)
-              button.btn.btn-primary.btn-lg.btn-block(type="button", ng-click="setSessionType(2)") Bullpen (Pitchers only)
+      // LOGIN
+      .row(ng-show="sections.login.show()")
+        p.message.error(ng-show="error" ng-bind="error")
+        .col-lg-4.col-lg-offset-4.col-md-6.col-md-offset-3.col-sm-10.col-sm-offset-1.col-xs-12
+          p(ng-bind="sections.login.text")
+          button.btn.btn-lg.btn-block(ng-repeat="button in sections.login.buttons", type="button", class="{{ 'btn-' + button.class }}", ng-bind="button.text", ng-click="sections.login.submit($index)")
 
-      #input(ng-show="view === 2")
+      // SESSION
+      .row(ng-show="sections.session.show()")
+        p.message.error(ng-show="error" ng-bind="error")
+        .col-xs-4.col-xs-offset-4
+          p(ng-bind="sections.session.text()")
+          button.btn.btn-primary.btn-lg.btn-block(ng-repeat="button in sections.session.buttons", type="button", ng-bind="button.text", ng-click="sections.session.submit($index)")
+
+      // LINEUP
+      .row(ng-show="sections.lineup.show()")
+        p.message.error(ng-show="error" ng-bind="error")
+        .col-xs-8.col-xs-offset-2
+          table.table
+            caption(ng-bind="sections.lineup.getTableCaption()")
+            thead
+              tr
+                th Category
+                th(ng-repeat="teamField in sections.lineup.fields.teams()", ng-bind="teamField")
+            tbody
+              tr
+                td Team
+                td(ng-repeat="teamField in sections.lineup.fields.teams()")
+                  select.form-control(ng-if="!sections.lineup.teamsSubmitted", ng-model="sections.lineup.data[teamField].team")
+                    option(ng-repeat="team in sections.lineup.teams", ng-bind="util.getTeamName(team)", value="{{ team._id }}")
+                  span(ng-if="sections.lineup.teamsSubmitted", ng-bind="util.getTeamName(sections.lineup.data[teamField].team)")
+              tr(ng-show="sections.lineup.teamsSubmitted", ng-repeat="position in sections.lineup.fields.positions")
+                td(ng-bind="position")
+                td(ng-repeat="teamField in sections.lineup.fields.teams()")
+                  select.form-control(ng-model="sections.lineup.data[teamField].lineup[position].player", ng-show="!sections.lineup.lineupsSubmitted")
+                    option(ng-repeat="player in sections.lineup.getPlayerOptions(teamField, position)", ng-bind="util.getPlayerName(player)", value="{{ player._id }}")
+                  form.form-inline(ng-show="sections.lineup.lineupsSubmitted")
+                    .form-group
+                      select.form-control.hole-select(ng-if="position !== 'P'", id="{{ teamField + position }}" ng-model="sections.lineup.data[teamField].lineup[position].number")
+                        option(ng-repeat="hole in sections.lineup.getLineupHoles()", ng-bind="hole", value="{{ hole }}")
+                      label(for="{{ teamField + position }}", ng-bind="sections.lineup.data[teamField].lineup[position].player.name")
+          button.btn.btn-primary.btn-block(type="button", ng-show="!sections.lineup.teamsSubmitted", ng-click="sections.lineup.submit.teams()") Submit Teams
+          button.btn.btn-primary.btn-block(type="button", ng-show="sections.lineup.teamsSubmitted", ng-click="sections.lineup.submit.lineups()") Submit Lineups
+
+
+      #input(ng-show="sections.input.show()")
         // INFO BAR
         .row#infoBar
           // BOX SCORE

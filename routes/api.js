@@ -8,16 +8,18 @@
 var express = require('express');
 var router = express.Router();
 
-// ---------------------------------------- Constants
+// ---------------------------------------- HTTP Status Codes
 var STATUS_OK = 200;
-var STATUS_ERROR = 500;
+var STATUS_CLIENT_ERR = 400;
+var STATUS_UNAUTHORIZED = 401;
+var STATUS_SERVER_ERR = 500;
 
 // ---------------------------------------- Helper Functions
 
 // sends an error response, log the location of the error
-function sendError(res, err) {
+function sendError(res, err, status) {
 	console.log('Error: ' + err);
-	res.status(STATUS_ERROR).send({ msg: err });
+	res.status(status).send({ msg: err });
 }
 
 // gets the current time in standardized UTC form
@@ -55,14 +57,15 @@ validationMap = {
 	'/user/login' : {
 		name     : 'string',
 		password : 'string',
-	}
+	},
+	'/team/list' : {}
 }
 
 /*
  * middleware to validate objects by ensuring that each desired key is contained
  * in the object, and that the type of each value matches expectation
  */
-
+/*
 router.use(function(req, res, next) {
 	// get the validation object
 	var validationObj = validationMap[req.url];
@@ -82,17 +85,21 @@ router.use(function(req, res, next) {
 
 	// if keys are missing send an error
 	if (missingKeys.length) {
-		sendError(res, 'The following data is missing: ' + missingKeys.join(', '));
+		res.status(STATUS_CLIENT_ERR).send({
+			msg: 'The following data is missing: ' + missingKeys.join(', ')
+		});
+	}
 
 	// if the number of keys in the body does not match that of the validation object
-	} else if(Object.keys(req.body).length !== validationKeys.length) {
-		sendError(res, 'The number of elements in the data does not match the expected number of elements');
+	if (Object.keys(req.body).length !== validationKeys.length) {
+		res.status(STATUS_CLIENT_ERR).send({
+			msg: 'The number of elements in the request does not match expectation'
+		});
+	}
 
 	// otherwise, proceed to the next relevant router function
-	} else {
-		next();
-	}
- });
+	next();
+ });*/
 
 // ---------------------------------------- Plate appearances
 
@@ -100,7 +107,7 @@ router.use(function(req, res, next) {
 router.post('/addpa', function(req, res) {
 	new req.models.PA(req.body).save(function(err, pa) {
 		if (err) {
-			sendError(res, err);
+			res.status(STATUS_SERVER_ERR).send({msg: err});
 		} else {
 			res.status(STATUS_OK).send({
 				msg : '',
@@ -117,7 +124,7 @@ router.post('/finalizepa', function(req, res) {
 
 	req.models.PA.findByIdAndUpdate(req.body._id, update, function(err, doc) {
 		if (err) {
-			sendError(res, err);
+			res.status(STATUS_SERVER_ERR).send({msg: err});
 		} else {
 			res.status(STATUS_OK).send({ msg: '' });
 		}
@@ -133,7 +140,7 @@ router.post('/addpitch', function(req, res) {
 
 	new req.models.Pitch(req.body).save(function(err, pitch) {
 		if (err) {
-			sendError(res, err);
+			res.status(STATUS_SERVER_ERR).send({msg: err});
 		} else {
 			// push the pitch id into the pa's array of pitches
 			var update = { $push: { "pitches" : pitch } };
@@ -146,7 +153,7 @@ router.post('/addpitch', function(req, res) {
 			// add the new pitch to its plate appearance array of pitches
 			req.models.PA.findByIdAndUpdate(pitch.pa, update, function(err, pa) {
 				if (err) {
-					sendError(res, err);
+					res.status(STATUS_SERVER_ERR).send({msg: err});
 				} else {
 					res.status(STATUS_OK).send({ msg: '' });
 				}
@@ -161,20 +168,20 @@ router.post('/user/create', function(req, res) {
 	// only one user for each name
 	req.models.User.findOne({ name: req.body.name }, function(err, user) {
 		if (err) {
-			sendError(res, err);
+			res.status(STATUS_SERVER_ERR).send({msg: err});
 		} else if (user) {
-			sendError(res, req.body.name + ' has already been taken');
+			res.status(STATUS_CLIENT_ERR).send({msg: req.body.name + ' has been taken'});
 		} else {
 			// create a user
 			new req.models.User(req.body).save(function(err, user) {
 				if (err) {
-					sendError(res, err);
+					res.status(STATUS_SERVER_ERR).send({msg: err});
 				} else {
-					// set the session user
+					// set the session and return the user
 					req.session.user = user;
 					res.status(STATUS_OK).send({
 						msg  : '',
-						user : user.name
+						user : user
 					});
 				}
 			});
@@ -187,15 +194,56 @@ router.post('/user/login', function(req, res) {
 	var query = { name: req.body.name, password: req.body.password};
 	req.models.User.findOne(query, function(err, user) {
 		if (err) {
-			sendError(res, err);
+			res.status(STATUS_SERVER_ERR).send({msg: err});
+		} else if (!user) {
+			// if the login attempt failed (no such user found)
+			res.status(STATUS_UNAUTHORIZED).send({msg: 'Incorrect username or password'});
 		} else {
 			// set the session and return the user
-			// if no user is found, 'null' will be the value set and returned
 			req.session.user = user;
 			res.status(STATUS_OK).send({
 				msg  : '',
-				user : user.name
+				user : user
 			});
+		}
+	});
+});
+
+// ---------------------------------------- Team
+/* GET the list of all teams. */
+router.get('/team/list', function(req, res) {
+	req.models.Team.find({}, function(err, teams) {
+		if (err) {
+			res.status(STATUS_SERVER_ERR).send({msg: err});
+		} else {
+			res.status(STATUS_OK).json(teams);
+		}
+	});
+});
+
+/* GET information about a team and its players. */
+router.get('/team/:id/players/list', function(req, res) {
+	req.models.Team.findById(req.params.id, function(err, team) {
+		if (err) {
+			res.status(STATUS_SERVER_ERR).send({msg: err});
+		} else {
+			// get the full players data for each player id
+			var players = [];
+			for (var i = 0; i < team.players.length; i++) {
+				req.models.Player.findById(team.players[i], function(err, player) {
+					if (err) {
+						res.status(STATUS_SERVER_ERR).send({msg: err});
+					} else {
+						players.push(player);
+						if (players.length === team.players.length) {
+							res.status(STATUS_OK).send({
+								team   : team,
+								players: players
+							});
+						}
+					}
+				});
+			}
 		}
 	});
 });
