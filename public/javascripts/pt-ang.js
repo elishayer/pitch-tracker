@@ -6,31 +6,23 @@
  */
 
 angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($scope, $http, $uibModal) {
-	// initialize the view, error, user, and lineup variables
+	// initialize the view, error, and user variables
+	// initialize to viewing the login section, no error, empty user
+	$scope.view = { section: 'login' };
 	$scope.error = null;
 	$scope.user = {};
-	// initialize to viewing the login section
-	$scope.view = { section: 'login' };
+
+	// initialize the constants
+	$scope.const = getPtConstants();
 
 	$scope.sections = {
 		login  : {
 			text    : 'Sign in, create an account, or log in as a guest',
 			show    : function() { return $scope.view.section === 'login'; },
 			buttons : [
-				{
-					text : 'Sign In',
-					class: 'primary',
-					url  : '/api/user/login',
-				},
-				{
-					text : 'Create An Account',
-					class: 'success',
-					url  : '/api/user/create',
-				},
-				{
-					text : 'Use as Guest',
-					class: 'warning'
-				}
+				{ text : 'Sign In', class: 'primary', url  : '/api/user/login' },
+				{ text : 'Create An Account', class: 'success', url  : '/api/user/create' },
+				{ text : 'Use as Guest', class: 'warning' }
 			],
 			fields  : [
 				{ name: 'name', type: 'text', value: '' },
@@ -57,12 +49,9 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 						'ng-model="result[field.name]"</input>';
 
 					// set the modal data to be the fields and disabled helper
-					$scope.modal = {
-						fields  : this.fields,
-						disabled: this.disabled
-					};
-					$scope.openModal(this.buttons[index].text,
-						body, 'Submit', 'Cancel', function(result) {
+					$scope.modal = { fields: this.fields, disabled: this.disabled };
+					$scope.openModal(this.buttons[index].text, body, 'Submit', 'Cancel',
+						function(result) {
 							$http.post($scope.sections.login.buttons[index].url, result).then(
 								function(response) {
 									// store the user and set the view to session
@@ -95,7 +84,7 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 				// set the session type TODO: API call to initialize a session
 				$scope.session = index;
 				// set the next view (lineup for game or practice, input for bullpen)
-				if ($scope.session === GAME || $scope.session === PRACTICE) {
+				if (index === $scope.const.GAME || index === $scope.const.PRACTICE) {
 					$scope.util.setSection('lineup');
 				} else {
 					$scope.util.setSection('input');
@@ -107,7 +96,7 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 			show   : function() { return $scope.view.section === 'lineup'; },
 			fields : {
 				teams    : function() {
-					if ($scope.session === GAME) {
+					if ($scope.session === $scope.const.GAME) {
 						return ['home', 'away'];
 					} else {
 						return ['home', 'away'];
@@ -129,7 +118,7 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 						positions.forEach(function(position) {
 							$scope.sections.lineup.data[team].lineup[position] = {
 								player: '',
-								number: '',
+								hole  : '',
 							};
 						});
 					});
@@ -141,6 +130,19 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 				});
 			},
 			submit : {
+				// select which submit method to use
+				getMethod: function() {
+					// if nothing has been submitted
+					if (!$scope.sections.lineup.teamsSubmitted) {
+						return this.teams;
+					// if team has been submitted but the lineup hasn't
+					} else if (!$scope.sections.lineup.lineupsSubmitted) {
+						return this.lineups;
+					// if the lineup and team have both been submitted
+					} else {
+						return this.order;
+					}
+				},
 				teams  : function() {
 					// get the list of players for each team
 					var teams = $scope.sections.lineup.fields.teams();
@@ -217,7 +219,64 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 					}
 				},
 				order  : function() {
+					// validation that there are no blanks and no duplicates
 					var teams = $scope.sections.lineup.fields.teams();
+
+					var uniqueHoles = true;
+					var holesFilled = true;
+
+					teams.forEach(function(team) {
+						var lineup = $scope.sections.lineup.data[team].lineup;
+						// reduce lineup to map from position to hole for uniqueness check
+						var map = {};
+						for (position in lineup) {
+							map[position] = lineup[position].hole;
+							// simultaneous keep track of whether all holes are filled
+							holesFilled = holesFilled && (map[position] || position === 'P');
+						}
+						uniqueHoles = uniqueHoles && $scope.util.isUnique(map);
+					});
+
+					if (!holesFilled) {
+						$scope.error = 'All holes must contain a player';
+					} else if (!uniqueHoles) {
+						$scope.error = 'There cannot be multiple players in the same hole';
+					} else {
+						// change the lineup structure
+						// previous: map from position to player and hole
+						// new: map from hole to array of player and position combinations
+						// the array is used so that lineup changes can be recorded
+						teams.forEach(function(team) {
+							var prev = $scope.sections.lineup.data[team].lineup;
+							// initialize the new lineup array
+							$scope.lineup = [];
+							for (position in prev) {
+								// push each position in to the new lineup array
+								$scope.lineup.push([{
+									player  : prev[position].player,
+									position: $scope.const.POS_TO_NUM[position],
+									hole    : parseInt(prev[position].hole)
+								}]);
+							}
+							// sort the lineup array by hole order, with the pitcher
+							// in the first spot (and thus the ith hitter in the ith index)
+							$scope.lineup.sort(function(a, b) {
+								if ($scope.const.NUM_TO_POS[a[0].position] === 'P') {
+									return -1;
+								} else if ($scope.const.NUM_TO_POS[b[0].position] === 'P') {
+									return 1;
+								} else if (a[0].hole < b[0].hole) {
+									return -1;
+								} else if (a[0].hole > b[0].hole) {
+									return 1;
+								} else {
+									return 0;
+								}
+							});
+							// change the section to input
+							$scope.util.setSection('input');
+						});
+					}
 				}
 			},
 			getPlayerOptions: function(team, position) {
@@ -228,13 +287,13 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 						// anyone can be a DH
 						return position === 'DH' ||
 							// an exact match to the position
-							$scope.util.includes(player.position, POSITION_TO_NUMBER[position]) ||
+							$scope.util.includes(player.position, $scope.const.POS_TO_NUM[position]) ||
 							// 'INF' works for all four infield positions
-							($scope.util.includes(player.position, POSITION_TO_NUMBER['INF']) &&
+							($scope.util.includes(player.position, $scope.const.POS_TO_NUM['INF']) &&
  								(position === '1B' || position === '2B' ||
  								 position === '3B' || position === 'SS')) ||
 							// 'OF' works for all three outfield positions
-							($scope.util.includes(player.position, POSITION_TO_NUMBER['OF']) &&
+							($scope.util.includes(player.position, $scope.const.POS_TO_NUM['OF']) &&
 								(position === 'LF' || position === 'CF' || position === 'RF'));
 					});
 				} else {
@@ -261,10 +320,28 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 				} else {
 					return 'Please select which hole each player will occupy';
 				}
+			},
+			// get the text for the button
+			getButtonText  : function() {
+				// if nothing has been submitted
+				if (!$scope.sections.lineup.teamsSubmitted) {
+					return 'Submit Teams';
+				// if team has been submitted but the lineup hasn't
+				} else if (!$scope.sections.lineup.lineupsSubmitted) {
+					return 'Submit Lineups';
+				// if the lineup and team have both been submitted
+				} else {
+					return 'Submit Orders';
+				}
 			}
 		},
 		input   : {
-
+			show  : function() { return $scope.view.section === 'input'; },
+			setter: function() {
+				// set the pitch tracker graphics
+				ptGraphics.setConstants($scope.const);
+				ptGraphics.callFunctions();
+			}
 		}
 	};
 
@@ -276,14 +353,16 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 		setSection   : function(section) {
 			// guard against bad setting call by confirming the section exists
 			if ($scope.sections[section]) {
-				// clear the error and change the section view
+				// clear the error
 				$scope.error = null;
-				$scope.view.section = section;
 				
 				// if there is a setter function, call it
 				if ($scope.sections[section].setter) {
 					$scope.sections[section].setter();
 				}
+
+				// change the view after the setter has been called if applicable
+				$scope.view.section = section;
 			}
 		},
 		// textual player identifier with name and number
@@ -362,7 +441,7 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 	// (0, 0) is the top left corner and (1, 1) is the bottom right corner, with
 	// left-right defined from the catcher perspective.
 	$scope.zoneClickListener = function(event) {
-		var boundRect = document.getElementById(ZONE_ID).getBoundingClientRect();
+		var boundRect = document.getElementById('zone').getBoundingClientRect();
 		$scope.curr.pitch.location.horizontal =
 			(event.clientX - boundRect.left) / (boundRect.right - boundRect.left);
 		$scope.curr.pitch.location.vertical =
@@ -371,26 +450,26 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 
 	// get x and y pixel locations based on a pitch location
 	$scope.getPitchX = function(pitch) {
-		var boundRect = document.getElementById(ZONE_ID).getBoundingClientRect();
+		var boundRect = document.getElementById('zone').getBoundingClientRect();
 		return pitch.location.horizontal * (boundRect.right - boundRect.left);
 	}
 	$scope.getPitchY = function(pitch) {
-		var boundRect = document.getElementById(ZONE_ID).getBoundingClientRect();
+		var boundRect = document.getElementById('zone').getBoundingClientRect();
 		return pitch.location.vertical * (boundRect.bottom - boundRect.top);
 	}
 
 	// get the color of a pitch based on its result
 	$scope.getPitchColor = function(pitch) {
 		switch (pitch.result) {
-			case BALL:
-				return BALL_COLOR;
-			case SWINGING_STRIKE:
-			case CALLED_STRIKE:
-			case FOUL:
-			case FOUL_TIP:
-				return STRIKE_COLOR;
-			case IN_PLAY:
-				return IN_PLAY_COLOR;
+			case $scope.const.BALL:
+				return $scope.const.BALL_COLOR;
+			case $scope.const.SWINGING_STRIKE:
+			case $scope.const.CALLED_STRIKE:
+			case $scope.const.FOUL:
+			case $scope.const.FOUL_TIP:
+				return $scope.const.STRIKE_COLOR;
+			case $scope.const.IN_PLAY:
+				return $scope.const.IN_PLAY_COLOR;
 			default:
 				$scope.error = true;
 				console.error('Unexpected pitch result');
@@ -441,26 +520,26 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 				pitchNum : $scope.curr.pa.pitches.length
 			}).then(function(response) {
 				// adjust the number of balls and strikes
-				if (pitch.result === BALL) {
+				if (pitch.result === $scope.const.BALL) {
 					$scope.curr.pa.balls++;
-				} else if (pitch.result === CALLED_STRIKE ||
-							pitch.result === SWINGING_STRIKE ||
-							pitch.result === FOUL_TIP ||
-							(pitch.result === FOUL &&
-								$scope.curr.pa.strikes < STRIKES_PER_K - 1)) {
+				} else if (pitch.result === $scope.const.CALLED_STRIKE ||
+							pitch.result === $scope.const.SWINGING_STRIKE ||
+							pitch.result === $scope.const.FOUL_TIP ||
+							(pitch.result === $scope.const.FOUL &&
+								$scope.curr.pa.strikes < $scope.const.STRIKES_PER_K - 1)) {
 					$scope.curr.pa.strikes++;
 				}
 
 				// set the plate appearance result if applicable
-				if ($scope.curr.pa.strikes === STRIKES_PER_K) {
-					$scope.submitPaResult(STRIKEOUT);
-				} else if ($scope.curr.pa.balls === BALLS_PER_BB) {
-					$scope.submitPaResult(WALK);
+				if ($scope.curr.pa.strikes === $scope.const.STRIKES_PER_K) {
+					$scope.submitPaResult($scope.const.STRIKEOUT);
+				} else if ($scope.curr.pa.balls === $scope.const.BALLS_PER_BB) {
+					$scope.submitPaResult($scope.const.WALK);
 				}
 
 				// if the ball was put in play switch to the result input view
-				if (pitch.result === IN_PLAY) {
-					$scope.ptInputView = RESULT_INPUT_GROUP;
+				if (pitch.result === $scope.const.IN_PLAY) {
+					$scope.ptInputView = $scope.const.RESULT_INPUT_GROUP;
 				}
 			}, function(response) {
 				$scope.error = true;
@@ -514,7 +593,7 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 			$scope.curr.inning.pas.push(pa);
 
 			// determine whether outs need to added
-			if (pa.result === STRIKEOUT || pa.result === IN_PLAY_OUT) {
+			if (pa.result === $scope.const.STRIKEOUT || pa.result === $scope.const.IN_PLAY_OUT) {
 				$scope.incrementOut();
 			}
 
@@ -522,7 +601,7 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 			$scope.advanceBaserunners(pa.hitter, result);
 
 			// reset the view to the player selector
-			$scope.ptInputView = PLAYER_INPUT_GROUP;
+			$scope.ptInputView = $scope.const.PLAYER_INPUT_GROUP;
 		}, function(response) {
 			$scope.error = true;
 		});
@@ -532,16 +611,16 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 	// advanecs baserunners as needed based on the plate appearance result
 	$scope.advanceBaserunners = function(hitter, result) {
 		switch(result) {
-			case WALK:
-			case HIT_BY_PITCH:
+			case $scope.const.WALK:
+			case $scope.const.HIT_BY_PITCH:
 				$scope.implementWalk(hitter);
 				break;
-			case SINGLE:
-			case DOUBLE:
-			case TRIPLE:
-			case HOME_RUN:
+			case $scope.const.SINGLE:
+			case $scope.const.DOUBLE:
+			case $scope.const.TRIPLE:
+			case $scope.const.HOME_RUN:
 				$scope.incrementHit(hitter);
-			case IN_PLAY_OUT:
+			case $scope.const.IN_PLAY_OUT:
 				$scope.implementInPlay(hitter, result);
 				break;
 		}
@@ -549,24 +628,24 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 
 	// implements a walk or a hit by pitch
 	$scope.implementWalk = function(hitter) {
-		if ($scope.bases[FIRST_BASE]) {
-			if ($scope.bases[SECOND_BASE]) {
-				if ($scope.bases[THIRD_BASE]) {
-					$scope.incrementRun($scope.bases[THIRD_BASE])
+		if ($scope.bases[$scope.const.FIRST_BASE]) {
+			if ($scope.bases[$scope.const.SECOND_BASE]) {
+				if ($scope.bases[$scope.const.THIRD_BASE]) {
+					$scope.incrementRun($scope.bases[$scope.const.THIRD_BASE])
 				}
-				$scope.bases[THIRD_BASE] = $scope.bases[SECOND_BASE];
+				$scope.bases[$scope.const.THIRD_BASE] = $scope.bases[$scope.const.SECOND_BASE];
 			}
-			$scope.bases[SECOND_BASE] = $scope.bases[FIRST_BASE];
+			$scope.bases[$scope.const.SECOND_BASE] = $scope.bases[$scope.const.FIRST_BASE];
 		}
-		$scope.bases[FIRST_BASE] = hitter;
+		$scope.bases[$scope.const.FIRST_BASE] = hitter;
 	}
 
 	// implements ball in play, including asking the user for baserunner advancement
 	// uses the fact that the pa result code for a single is 1, double is 2, etc.
 	$scope.implementInPlay = function(hitter, result) {
 		// if HR score the hitter, otherwise place on base
-		if (result === HOME_RUN) {
-			for (var base = FIRST_BASE; base <= THIRD_BASE; base++) {
+		if (result === $scope.const.HOME_RUN) {
+			for (var base = $scope.const.FIRST_BASE; base <= $scope.const.THIRD_BASE; base++) {
 				if ($scope.bases[base]) {
 					$scope.incrementRun($scope.bases[base]);
 				}
@@ -574,14 +653,14 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 			$scope.incrementRun(hitter);
 		} else {
 			// if in play, ask the user for advancement data for each occupied base
-			for (var base = THIRD_BASE; base >= FIRST_BASE; base--) {
+			for (var base = $scope.const.THIRD_BASE; base >= $scope.const.FIRST_BASE; base--) {
 				if ($scope.bases[base]) {
 					$scope.enqueueModal($scope.bases[base], base, false);
 				}
 			}
 
 			// add the hitter to the bases 
-			$scope.enqueueModal(hitter, result - 1, true, result !== IN_PLAY_OUT);
+			$scope.enqueueModal(hitter, result - 1, true, result !== $scope.const.IN_PLAY_OUT);
 		}
 	}
 
@@ -637,11 +716,11 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 
 	// get a textual base, where 0 -> first, ..., 2 -> third
 	$scope.baseToString = function(base) {
-		if (base === FIRST_BASE) {
+		if (base === $scope.const.FIRST_BASE) {
 			return "first base";
-		} else if (base === SECOND_BASE) {
+		} else if (base === $scope.const.SECOND_BASE) {
 			return "second base";
-		} else if (base === THIRD_BASE) {
+		} else if (base === $scope.const.THIRD_BASE) {
 			return "third base";
 		} else {
 			console.error('Home base to string');
@@ -661,7 +740,7 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 		// if the new base is not 0 (an out)
 		if (base) {
 			// if home base, count the run
-			if (base - 1 === HOME_BASE) {
+			if (base - 1 === $scope.const.HOME_BASE) {
 				$scope.incrementRun($scope.modalQueue[0].runner);
 			} else {
 				// if first, second, third base, place at that base
@@ -704,7 +783,7 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 	// add an out to the count, and initialize a new inning if necessary
 	$scope.incrementOut = function() {
 		$scope.curr.inning.outs++;
-		if ($scope.curr.inning.outs === OUTS_PER_INNING) {
+		if ($scope.curr.inning.outs === $scope.const.OUTS_PER_INNING) {
 			$scope.initializeInning();
 		}
 	}
@@ -764,19 +843,19 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 
 	// generate the message based on the input view and error
 	$scope.generateMessage = function() {
-		if ($scope.ptInputView === PLAYER_INPUT_GROUP) {
+		if ($scope.ptInputView === $scope.const.PLAYER_INPUT_GROUP) {
 			if ($scope.error) {
 				return 'There was an error entering the player data';
 			} else {
 				return 'Enter the pitcher and the hitter';
 			}
-		} else if ($scope.ptInputView === PITCH_INPUT_GROUP) {
+		} else if ($scope.ptInputView === $scope.const.PITCH_INPUT_GROUP) {
 			if ($scope.error) {
 				return 'There was an error entering the pitch data';
 			} else {
 				return 'Enter the pitch data';
 			}
-		} else if ($scope.ptInputView === RESULT_INPUT_GROUP) {
+		} else if ($scope.ptInputView === $scope.const.RESULT_INPUT_GROUP) {
 			if ($scope.error) {
 				return 'There was an error entering the plate appearance result data';
 			} else {
@@ -790,23 +869,23 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 
 	// convert the pitch type to text
 	$scope.pitchTypeToString = function(type) {
-		return PITCH_TYPE_MAP[type];
+		return $scope.const.PITCH_TYPE_MAP[type];
 	}
 
 	// convert the pitch result to text
 	$scope.pitchResultToString = function(result) {
-		return PITCH_RESULT_MAP[result];
+		return $scope.const.PITCH_RESULT_MAP[result];
 	}
 
 	// convert the pa result to text
 	$scope.paResultToString = function(result) {
-		return PA_RESULT_MAP[result];
+		return $scope.const.PA_RESULT_MAP[result];
 	}
 
 	// get an array of inning numbers to display
 	$scope.getInningNums = function() {
 		// if in extra innings, extend to that higher
-		var numInnings = Math.max(MIN_INNINGS, $scope.curr.inning.num);
+		var numInnings = Math.max($scope.const.MIN_INNINGS, $scope.curr.inning.num);
 
 		return $scope.getRange(numInnings);
 	}
@@ -864,7 +943,7 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 	};
 	$scope.innings = [];
 	$scope.modalQueue = [];
-	$scope.ptInputView = PLAYER_INPUT_GROUP;
+	$scope.ptInputView = $scope.const.PLAYER_INPUT_GROUP;
 
 	// initialize the inning, pa, and pitch objects
 	$scope.initializeInning();

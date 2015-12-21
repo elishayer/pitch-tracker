@@ -27,7 +27,8 @@ var POSITION_MAP = {
 	'cf'  : 8,
 	'rf'  : 9,
 	'inf' : 10,
-	'of'  : 11
+	'of'  : 11,
+	'dh'  : 12
 }
 
 // the fields of the player schema required for the roster upload

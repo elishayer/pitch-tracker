@@ -32,7 +32,7 @@ html
 
           ul.nav.navbar-nav.navbar-right
             li(ng-show="user.name.length")
-              a(role='button') Welcome, {{ user.name }}
+              a(role='button', ng-bind="'Welcome, ' + user.name")
 
     .container
       // TITLE
@@ -43,7 +43,7 @@ html
         p.message.error(ng-show="error" ng-bind="error")
         .col-lg-4.col-lg-offset-4.col-md-6.col-md-offset-3.col-sm-10.col-sm-offset-1.col-xs-12
           p(ng-bind="sections.login.text")
-          button.btn.btn-lg.btn-block(ng-repeat="button in sections.login.buttons", type="button", class="{{ 'btn-' + button.class }}", ng-bind="button.text", ng-click="sections.login.submit($index)")
+          button.btn.btn-lg.btn-block(ng-repeat="button in sections.login.buttons", type="button", ng-class="'btn-' + button.class", ng-bind="button.text", ng-click="sections.login.submit($index)")
 
       // SESSION
       .row(ng-show="sections.session.show()")
@@ -68,7 +68,7 @@ html
                 td(ng-repeat="teamField in sections.lineup.fields.teams()")
                   select.form-control(ng-if="!sections.lineup.teamsSubmitted", ng-model="sections.lineup.data[teamField].team")
                     option(ng-repeat="team in sections.lineup.teams", ng-bind="util.getTeamName(team)", value="{{ team._id }}")
-                  span(ng-if="sections.lineup.teamsSubmitted", ng-bind="util.getTeamName(sections.lineup.data[teamField].team)")
+                  label(ng-if="sections.lineup.teamsSubmitted", ng-bind="util.getTeamName(sections.lineup.data[teamField].team)")
               tr(ng-show="sections.lineup.teamsSubmitted", ng-repeat="position in sections.lineup.fields.positions")
                 td(ng-bind="position")
                 td(ng-repeat="teamField in sections.lineup.fields.teams()")
@@ -76,12 +76,10 @@ html
                     option(ng-repeat="player in sections.lineup.getPlayerOptions(teamField, position)", ng-bind="util.getPlayerName(player)", value="{{ player._id }}")
                   form.form-inline(ng-show="sections.lineup.lineupsSubmitted")
                     .form-group
-                      select.form-control.hole-select(ng-if="position !== 'P'", id="{{ teamField + position }}" ng-model="sections.lineup.data[teamField].lineup[position].number")
+                      select.form-control.hole-select(ng-if="position !== 'P'", id="{{ teamField + position }}" ng-model="sections.lineup.data[teamField].lineup[position].hole")
                         option(ng-repeat="hole in sections.lineup.getLineupHoles()", ng-bind="hole", value="{{ hole }}")
                       label(for="{{ teamField + position }}", ng-bind="sections.lineup.data[teamField].lineup[position].player.name")
-          button.btn.btn-primary.btn-block(type="button", ng-show="!sections.lineup.teamsSubmitted", ng-click="sections.lineup.submit.teams()") Submit Teams
-          button.btn.btn-primary.btn-block(type="button", ng-show="sections.lineup.teamsSubmitted", ng-click="sections.lineup.submit.lineups()") Submit Lineups
-
+          button.btn.btn-primary.btn-block(type="button", ng-click="sections.lineup.submit.getMethod()()", ng-bind="sections.lineup.getButtonText()")
 
       #input(ng-show="sections.input.show()")
         // INFO BAR
