@@ -338,9 +338,9 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 		input   : {
 			show  : function() { return $scope.view.section === 'input'; },
 			setter: function() {
-				// set the pitch tracker graphics
+				// set the pitch tracker constants and draw the graphics
 				ptGraphics.setConstants($scope.const);
-				ptGraphics.callFunctions();
+				ptGraphics.drawGraphics();
 			}
 		}
 	};
@@ -353,16 +353,14 @@ angular.module('ptApp', ['ui.bootstrap']).controller('ptController', function($s
 		setSection   : function(section) {
 			// guard against bad setting call by confirming the section exists
 			if ($scope.sections[section]) {
-				// clear the error
+				// clear the error and change the view
 				$scope.error = null;
+				$scope.view.section = section;
 				
 				// if there is a setter function, call it
 				if ($scope.sections[section].setter) {
 					$scope.sections[section].setter();
 				}
-
-				// change the view after the setter has been called if applicable
-				$scope.view.section = section;
 			}
 		},
 		// textual player identifier with name and number
